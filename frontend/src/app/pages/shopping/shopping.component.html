@@ -102,7 +102,7 @@
     <div class="shopping-list-mobile" *ngIf="!loading && items.length > 0">
       <div class="shopping-card" *ngFor="let item of items" data-cy="shopping-card">
         <div class="info">
-          <h4>{{ item.name }}</h4>
+          <h4 [attr.title]="getBreakdownTitle(item)">{{ item.name }}</h4>
           <p>{{ item.category || 'Uncategorized' }} | {{ item.unit }}</p>
           <div class="meta-chips">
             <span class="chip chip-amount">{{ item.totalQuantity }} {{ item.unit }}</span>
@@ -112,14 +112,15 @@
           <div class="warehouse-grid">
             <div class="warehouse-field">
               <label [for]="'warehouse-' + item.id">Warehouse</label>
-              <p-inputNumber
-                [inputId]="'warehouse-' + item.id"
-                [min]="0"
-                [useGrouping]="false"
-                [(ngModel)]="item.warehouse"
-                (onBlur)="commitWarehouse(item)"
-                data-cy="warehouse-input"
-              ></p-inputNumber>
+            <p-inputNumber
+              [inputId]="'warehouse-' + item.id"
+              [min]="0"
+              [useGrouping]="false"
+              [(ngModel)]="item.warehouse"
+              (onBlur)="commitWarehouse(item)"
+              [disabled]="!item.ownedByUser"
+              data-cy="warehouse-input"
+            ></p-inputNumber>
             </div>
             <div class="warehouse-field warehouse-field--readonly">
               <label>To purchase</label>
@@ -132,12 +133,13 @@
             <p-toggleSwitch
               [ngModel]="item.purchased"
               (onChange)="togglePurchased(item, $event.checked)"
+              [disabled]="!item.ownedByUser"
               data-cy="shopping-toggle"
               aria-label="Toggle purchased"
             ></p-toggleSwitch>
             <span>{{ item.purchased ? 'Purchased' : 'Pending' }}</span>
           </div>
-          <ng-container *ngIf="item.source === 'OFF_MENU'">
+          <ng-container *ngIf="item.source === 'OFF_MENU' && item.ownedByUser">
             <button
               pButton
               type="button"
@@ -182,12 +184,13 @@
               <p-toggleSwitch
                 [ngModel]="item.purchased"
                 (onChange)="togglePurchased(item, $event.checked)"
+                [disabled]="!item.ownedByUser"
                 data-cy="shopping-toggle"
                 aria-label="Toggle purchased"
               ></p-toggleSwitch>
             </td>
             <td>
-              <strong>{{ item.name }}</strong>
+              <strong [attr.title]="getBreakdownTitle(item)">{{ item.name }}</strong>
               <br>
               <small>{{ item.category || 'Uncategorized' }}</small>
             </td>
@@ -198,6 +201,7 @@
                 [useGrouping]="false"
                 [(ngModel)]="item.warehouse"
                 (onBlur)="commitWarehouse(item)"
+                [disabled]="!item.ownedByUser"
                 styleClass="warehouse-input"
                 data-cy="warehouse-input"
               ></p-inputNumber>
@@ -210,7 +214,7 @@
               <p-tag [value]="item.mealType" *ngIf="item.mealType"></p-tag>
             </td>
             <td>
-              <div class="actions" *ngIf="item.source === 'OFF_MENU'">
+              <div class="actions" *ngIf="item.source === 'OFF_MENU' && item.ownedByUser">
                 <button
                   pButton
                   type="button"
@@ -318,4 +322,3 @@
     </form>
   </p-dialog>
 </section>
-

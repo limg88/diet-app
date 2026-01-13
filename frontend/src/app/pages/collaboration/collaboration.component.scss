@@ -1,0 +1,49 @@
+.invite-form {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.grid-two {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.invite-list,
+.partner-list {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.invite-card,
+.partner-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--space-md);
+  border: 1px solid var(--border-color);
+  background: var(--surface-b);
+}
+
+.invite-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.spinner {
+  margin: var(--space-xl) auto;
+  display: block;
+}
+
+@media (min-width: 900px) {
+  .grid-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

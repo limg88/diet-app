@@ -14,6 +14,7 @@ export class IngredientsApi {
     mealType?: MealType;
     includeDeleted?: boolean;
     sort?: string;
+    ownerUserId?: string;
   }) {
     let params = new HttpParams();
     Object.entries(query).forEach(([key, value]) => {

@@ -168,9 +168,9 @@ async function seed() {
 
     await client.query(
       `INSERT INTO shopping_items
-       (user_id, week_start_date, source, ingredient_id, name, category, unit, quantity, meal_type, purchased)
-       VALUES ($1, $2, 'OFF_MENU', NULL, 'Sparkling Water', 'Drinks', $3, $4, NULL, false)`,
-      [userId, weekStartDate, Unit.ML, 1500],
+       (user_id, week_start_date, source, ingredient_id, item_key, name, category, unit, quantity, meal_type, purchased)
+       VALUES ($1, $2, 'OFF_MENU', NULL, $3, 'Sparkling Water', 'Drinks', $4, $5, NULL, false)`,
+      [userId, weekStartDate, `sparkling water|${Unit.ML}`, Unit.ML, 1500],
     );
   } finally {
     await client.end();

@@ -6,6 +6,7 @@ import { HealthController } from './health/health.controller';
 import { IngredientsModule } from './ingredients/ingredients.module';
 import { MenuModule } from './menu/menu.module';
 import { ShoppingModule } from './shopping/shopping.module';
+import { CollaborationModule } from './collaboration/collaboration.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ShoppingModule } from './shopping/shopping.module';
     IngredientsModule,
     MenuModule,
     ShoppingModule,
+    CollaborationModule,
   ],
   controllers: [HealthController],
   providers: [],

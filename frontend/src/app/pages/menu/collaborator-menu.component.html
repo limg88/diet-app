@@ -1,0 +1,8 @@
+<p-progressSpinner *ngIf="loading" styleClass="spinner"></p-progressSpinner>
+
+<app-menu-page
+  *ngIf="collaboratorId"
+  [ownerUserId]="collaboratorId"
+  [title]="'Menu di ' + collaboratorEmail"
+  [showCollaboratorBadge]="true"
+></app-menu-page>

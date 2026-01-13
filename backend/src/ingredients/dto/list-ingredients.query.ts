@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { MealType } from '../../common/enums/meal-type.enum';
 import { Unit } from '../../common/enums/unit.enum';
 
@@ -39,4 +39,8 @@ export class ListIngredientsQuery {
   @IsNumber()
   @Min(1)
   pageSize?: number;
+
+  @IsOptional()
+  @IsUUID()
+  ownerUserId?: string;
 }

@@ -140,6 +140,9 @@ export class ShoppingComponent implements OnInit {
   }
 
   togglePurchased(item: ShoppingItem, nextValue: boolean) {
+    if (!item.ownedByUser) {
+      return;
+    }
     const previous = item.purchased;
     item.purchased = nextValue;
     this.shoppingApi.updatePurchased(item.id, nextValue).subscribe({
@@ -151,6 +154,9 @@ export class ShoppingComponent implements OnInit {
   }
 
   commitWarehouse(item: ShoppingItem) {
+    if (!item.ownedByUser) {
+      return;
+    }
     const normalized = this.normalizeWarehouse(item.warehouse);
     item.warehouse = normalized;
     const previous = this.warehouseBaseline.get(item.id);
@@ -174,6 +180,15 @@ export class ShoppingComponent implements OnInit {
     const total = Number(item.totalQuantity ?? 0);
     const warehouse = this.normalizeWarehouse(item.warehouse);
     return Math.max(total - warehouse, 0);
+  }
+
+  getBreakdownTitle(item: ShoppingItem) {
+    if (!item.breakdown || item.breakdown.length === 0) {
+      return null;
+    }
+    return item.breakdown
+      .map((entry) => `${entry.label}: ${entry.quantity} ${item.unit}`)
+      .join(' | ');
   }
 
   private normalizeWarehouse(value: number | null | undefined) {

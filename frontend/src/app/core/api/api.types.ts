@@ -47,6 +47,8 @@ export type WeeklyMenu = {
 export type ShoppingItem = {
   id: string;
   source: 'MENU' | 'OFF_MENU';
+  ownerId: string;
+  ownedByUser: boolean;
   ingredientId: string | null;
   name: string;
   category: string | null;
@@ -55,9 +57,32 @@ export type ShoppingItem = {
   warehouse: number;
   mealType: string | null;
   purchased: boolean;
+  breakdown?: Array<{ label: string; quantity: number }>;
 };
 
 export type ShoppingList = {
   weekStartDate: string;
   items: ShoppingItem[];
+};
+
+export type CollaborationInvite = {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'revoked';
+  created_at: string;
+  updated_at: string;
+  sender_email?: string;
+  recipient_email?: string;
+};
+
+export type CollaborationInvites = {
+  incoming: CollaborationInvite[];
+  outgoing: CollaborationInvite[];
+};
+
+export type Collaborator = {
+  user_id: string;
+  email: string;
+  since: string;
 };

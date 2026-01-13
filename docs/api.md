@@ -19,10 +19,10 @@ PUT /ingredients/:id { name?, category?, defaultUnit?, defaultQuantity?, allowed
 DELETE /ingredients/:id (soft delete preferred)
 
 ## Menu (current week only)
-GET /menu/current -> returns weekStartDate, days[7]{ dayOfWeek, meals[5]{ mealType, items[] } }
-POST /menu/current/meals/:mealId/items { ingredientId, quantity, unit }
-PUT /menu/current/items/:itemId { quantity, unit }
-DELETE /menu/current/items/:itemId
+GET /menu/current?ownerUserId= -> returns weekStartDate, days[7]{ dayOfWeek, meals[5]{ mealType, items[] } }
+POST /menu/current/meals/:mealId/items?ownerUserId= { ingredientId, quantity, unit }
+PUT /menu/current/items/:itemId?ownerUserId= { quantity, unit }
+DELETE /menu/current/items/:itemId?ownerUserId=
 
 Server validates:
 - ingredient exists and belongs to user
@@ -33,6 +33,15 @@ Server validates:
 ## Shopping (current week only)
 GET /shopping/current?search=&category=&unit=&source=&purchased=&sort=
 PATCH /shopping/current/items/:id { purchased }
+PATCH /shopping/current/items/:id/warehouse { warehouse }
 POST /shopping/current/off-menu { name, category?, quantity, unit }
 PUT /shopping/current/off-menu/:id { name?, category?, quantity?, unit?, category? }
 DELETE /shopping/current/off-menu/:id
+
+## Collaboration
+POST /collaboration/invites { email }
+GET /collaboration/invites
+POST /collaboration/invites/:id/accept
+POST /collaboration/invites/:id/reject
+DELETE /collaboration/invites/:id
+GET /collaboration/partners

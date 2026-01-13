@@ -45,7 +45,7 @@
   left: 0;
   right: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-lg);
   padding-bottom: calc(env(safe-area-inset-bottom) + var(--space-sm)); /* iOS safe area */

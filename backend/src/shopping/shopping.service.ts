@@ -3,6 +3,7 @@ import { MealType } from '../common/enums/meal-type.enum';
 import { Unit } from '../common/enums/unit.enum';
 import { DatabaseService } from '../database/database.service';
 import { MenuService } from '../menu/menu.service';
+import { CollaborationService } from '../collaboration/collaboration.service';
 import { CreateOffMenuDto } from './dto/create-off-menu.dto';
 import { ListShoppingQuery } from './dto/list-shopping.query';
 import { UpdateOffMenuDto } from './dto/update-off-menu.dto';
@@ -12,16 +13,19 @@ import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 type AggregatedMenuRow = {
   ingredient_id: string;
   unit: Unit;
-  total_quantity: string;
-  meal_types: MealType[];
   name: string;
   category: string | null;
+  quantity: string;
+  meal_type: MealType;
+  owner_id: string;
 };
 
 type ShoppingItemRow = {
   id: string;
   source: 'MENU' | 'OFF_MENU';
+  owner_id?: string;
   ingredient_id: string | null;
+  item_key: string;
   name: string;
   category: string | null;
   unit: Unit;
@@ -34,6 +38,8 @@ type ShoppingItemRow = {
 type ShoppingItemDto = {
   id: string;
   source: 'MENU' | 'OFF_MENU';
+  ownerId: string;
+  ownedByUser: boolean;
   ingredientId: string | null;
   name: string;
   category: string | null;
@@ -42,6 +48,7 @@ type ShoppingItemDto = {
   warehouse: number;
   mealType: string | null;
   purchased: boolean;
+  breakdown?: Array<{ label: string; quantity: number }>;
 };
 
 @Injectable()
@@ -49,15 +56,39 @@ export class ShoppingService {
   constructor(
     private readonly db: DatabaseService,
     private readonly menuService: MenuService,
+    private readonly collaborationService: CollaborationService,
   ) {}
 
   async getCurrentShopping(userId: string, query: ListShoppingQuery) {
-    const { menuId, weekStartDate } = await this.menuService.ensureCurrentMenuForUser(userId);
-    const menuAggregates = await this.aggregateMenuItems(menuId);
+    const { menuId: currentMenuId, weekStartDate } =
+      await this.menuService.ensureCurrentMenuForUser(userId);
+    const partnerIds = await this.collaborationService.listPartnerIds(userId);
+    const partners = await this.collaborationService.listPartners(userId);
+    const labelMap = new Map<string, string>(partners.map((partner) => [partner.user_id, partner.email]));
+    labelMap.set(userId, 'You');
+    const menuIds = [currentMenuId];
+    for (const partnerId of partnerIds) {
+      const { menuId } = await this.menuService.ensureCurrentMenuForUser(partnerId);
+      menuIds.push(menuId);
+    }
+    const menuAggregates = await this.aggregateMenuItems(menuIds, userId);
+    const menuAggregatesWithLabels = menuAggregates.map((item) => ({
+      ...item,
+      breakdown: item.breakdown.map((entry) => ({
+        label: labelMap.get(entry.ownerId) ?? 'Collaborator',
+        quantity: entry.quantity,
+      })),
+    }));
 
-    await this.syncMenuShoppingItems(userId, weekStartDate, menuAggregates);
+    await this.syncMenuShoppingItems(userId, weekStartDate, menuAggregatesWithLabels);
 
-    const items = await this.loadShoppingItems(userId, weekStartDate, menuAggregates);
+    const items = await this.loadShoppingItems(
+      userId,
+      weekStartDate,
+      menuAggregatesWithLabels,
+      partnerIds,
+      labelMap,
+    );
     const filtered = this.applyFilters(items, query);
     const sorted = this.applySort(filtered, query.sort);
 
@@ -66,21 +97,43 @@ export class ShoppingService {
 
   async updatePurchased(userId: string, id: string, dto: UpdatePurchasedDto) {
     const weekStartDate = await this.menuService.getCurrentWeekStartDate();
-    const result = await this.db.query<ShoppingItemRow>(
-      `UPDATE shopping_items
-       SET purchased = $1, updated_at = now()
-       WHERE id = $2 AND user_id = $3 AND week_start_date = $4::date
-       RETURNING id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased`,
-      [dto.purchased, id, userId, weekStartDate],
+    const currentRow = await this.db.query<ShoppingItemRow>(
+      `SELECT id, source, user_id AS owner_id, ingredient_id, item_key, name, category, unit, quantity, warehouse, meal_type, purchased
+       FROM shopping_items
+       WHERE id = $1 AND user_id = $2 AND week_start_date = $3::date`,
+      [id, userId, weekStartDate],
     );
-    if (result.rowCount === 0) {
+    if (currentRow.rowCount === 0) {
       throw new NotFoundException('Shopping item not found');
     }
 
-    const row = result.rows[0];
+    const row = currentRow.rows[0];
+    if (row.source === 'MENU') {
+      const partnerIds = await this.collaborationService.listPartnerIds(userId);
+      const ownerIds = [userId, ...partnerIds];
+      await this.db.query(
+        `UPDATE shopping_items
+         SET purchased = $1, updated_at = now()
+         WHERE week_start_date = $2::date
+           AND source = 'MENU'
+           AND item_key = $3
+           AND user_id = ANY($4::uuid[])`,
+        [dto.purchased, weekStartDate, row.item_key, ownerIds],
+      );
+    } else {
+      await this.db.query(
+        `UPDATE shopping_items
+         SET purchased = $1, updated_at = now()
+         WHERE id = $2 AND user_id = $3 AND week_start_date = $4::date`,
+        [dto.purchased, id, userId, weekStartDate],
+      );
+    }
+
     return {
       id: row.id,
       source: row.source,
+      ownerId: userId,
+      ownedByUser: true,
       ingredientId: row.ingredient_id,
       name: row.name,
       category: row.category,
@@ -88,7 +141,7 @@ export class ShoppingService {
       totalQuantity: Number(row.quantity),
       warehouse: Number(row.warehouse),
       mealType: row.meal_type,
-      purchased: row.purchased,
+      purchased: dto.purchased,
     };
   }
 
@@ -98,35 +151,46 @@ export class ShoppingService {
       `UPDATE shopping_items
        SET warehouse = $1, updated_at = now()
        WHERE id = $2 AND user_id = $3 AND week_start_date = $4::date
-       RETURNING id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased`,
+       RETURNING id, source, ingredient_id, item_key, name, category, unit, quantity, warehouse, meal_type, purchased`,
       [dto.warehouse, id, userId, weekStartDate],
     );
     if (result.rowCount === 0) {
       throw new NotFoundException('Shopping item not found');
     }
-    return this.mapRow(result.rows[0]);
+    return this.mapRow(result.rows[0], userId);
   }
 
   async createOffMenu(userId: string, dto: CreateOffMenuDto) {
     const weekStartDate = await this.menuService.getCurrentWeekStartDate();
     const result = await this.db.query<ShoppingItemRow>(
       `INSERT INTO shopping_items
-       (user_id, week_start_date, source, ingredient_id, name, category, unit, quantity, meal_type, purchased)
-       VALUES ($1, $2, 'OFF_MENU', NULL, $3, $4, $5, $6, NULL, false)
-       RETURNING id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased`,
-      [userId, weekStartDate, dto.name, dto.category ?? null, dto.unit, dto.quantity],
+       (user_id, week_start_date, source, ingredient_id, item_key, name, category, unit, quantity, meal_type, purchased)
+       VALUES ($1, $2, 'OFF_MENU', NULL, $3, $4, $5, $6, $7, NULL, false)
+       RETURNING id, source, ingredient_id, item_key, name, category, unit, quantity, warehouse, meal_type, purchased`,
+      [
+        userId,
+        weekStartDate,
+        this.buildItemKey(dto.name, dto.unit),
+        dto.name,
+        dto.category ?? null,
+        dto.unit,
+        dto.quantity,
+      ],
     );
-    return this.mapRow(result.rows[0]);
+    return this.mapRow(result.rows[0], userId);
   }
 
   async updateOffMenu(userId: string, id: string, dto: UpdateOffMenuDto) {
     const weekStartDate = await this.menuService.getCurrentWeekStartDate();
     const fields: string[] = [];
     const params: unknown[] = [id, userId, weekStartDate];
+    let nameParamIndex: number | null = null;
+    let unitParamIndex: number | null = null;
 
     if (dto.name !== undefined) {
       params.push(dto.name);
-      fields.push(`name = $${params.length}`);
+      nameParamIndex = params.length;
+      fields.push(`name = $${nameParamIndex}`);
     }
 
     if (dto.category !== undefined) {
@@ -136,12 +200,19 @@ export class ShoppingService {
 
     if (dto.unit !== undefined) {
       params.push(dto.unit);
-      fields.push(`unit = $${params.length}`);
+      unitParamIndex = params.length;
+      fields.push(`unit = $${unitParamIndex}`);
     }
 
     if (dto.quantity !== undefined) {
       params.push(dto.quantity);
       fields.push(`quantity = $${params.length}`);
+    }
+
+    if (dto.name !== undefined || dto.unit !== undefined) {
+      const nameExpr = nameParamIndex ? `$${nameParamIndex}` : 'name';
+      const unitExpr = unitParamIndex ? `$${unitParamIndex}` : 'unit';
+      fields.push(`item_key = LOWER(TRIM(${nameExpr})) || '|' || ${unitExpr}`);
     }
 
     if (fields.length === 0) {
@@ -152,13 +223,13 @@ export class ShoppingService {
       `UPDATE shopping_items
        SET ${fields.join(', ')}, updated_at = now()
        WHERE id = $1 AND user_id = $2 AND week_start_date = $3::date AND source = 'OFF_MENU'
-       RETURNING id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased`,
+       RETURNING id, source, ingredient_id, item_key, name, category, unit, quantity, warehouse, meal_type, purchased`,
       params,
     );
     if (result.rowCount === 0) {
       throw new NotFoundException('Off-menu item not found');
     }
-    return this.mapRow(result.rows[0]);
+    return this.mapRow(result.rows[0], userId);
   }
 
   async deleteOffMenu(userId: string, id: string) {
@@ -174,30 +245,84 @@ export class ShoppingService {
     return { id };
   }
 
-  private async aggregateMenuItems(menuId: string) {
+  private async aggregateMenuItems(menuIds: string[], currentUserId: string) {
+    if (menuIds.length === 0) {
+      return [];
+    }
     const result = await this.db.query<AggregatedMenuRow>(
       `SELECT
          mi.ingredient_id,
          mi.unit,
-         SUM(mi.quantity) AS total_quantity,
-         ARRAY_AGG(DISTINCT mm.meal_type) AS meal_types,
-         MAX(i.name) AS name,
-         MAX(i.category) AS category
+         mi.quantity,
+         mm.meal_type,
+         i.name,
+         i.category,
+         wm.user_id AS owner_id
        FROM menu_meals mm
+       JOIN weekly_menus wm ON wm.id = mm.weekly_menu_id
        JOIN meal_items mi ON mi.menu_meal_id = mm.id
        JOIN ingredients i ON i.id = mi.ingredient_id
-       WHERE mm.weekly_menu_id = $1
-       GROUP BY mi.ingredient_id, mi.unit`,
-      [menuId],
+       WHERE mm.weekly_menu_id = ANY($1::uuid[])`,
+      [menuIds],
     );
 
-    return result.rows.map((row) => ({
-      ingredientId: row.ingredient_id,
-      unit: row.unit,
-      totalQuantity: Number(row.total_quantity),
-      mealTypes: row.meal_types,
-      name: row.name,
-      category: row.category,
+    const aggregates = new Map<
+      string,
+      {
+        itemKey: string;
+        ingredientId: string | null;
+        unit: Unit;
+        totalQuantity: number;
+        mealTypes: Set<MealType>;
+        name: string;
+        category: string | null;
+        breakdown: Map<string, number>;
+      }
+    >();
+
+    for (const row of result.rows) {
+      const itemKey = this.buildItemKey(row.name, row.unit);
+      const existing = aggregates.get(itemKey);
+      if (!existing) {
+        aggregates.set(itemKey, {
+          itemKey,
+          ingredientId: row.owner_id === currentUserId ? row.ingredient_id : null,
+          unit: row.unit,
+          totalQuantity: Number(row.quantity),
+          mealTypes: new Set([row.meal_type]),
+          name: row.name,
+          category: row.category,
+          breakdown: new Map([[row.owner_id, Number(row.quantity)]]),
+        });
+        continue;
+      }
+
+      existing.totalQuantity += Number(row.quantity);
+      existing.mealTypes.add(row.meal_type);
+      existing.breakdown.set(
+        row.owner_id,
+        (existing.breakdown.get(row.owner_id) ?? 0) + Number(row.quantity),
+      );
+
+      if (row.owner_id === currentUserId) {
+        existing.ingredientId = existing.ingredientId ?? row.ingredient_id;
+        existing.name = row.name;
+        existing.category = row.category;
+      }
+    }
+
+    return Array.from(aggregates.values()).map((item) => ({
+      itemKey: item.itemKey,
+      ingredientId: item.ingredientId,
+      unit: item.unit,
+      totalQuantity: item.totalQuantity,
+      mealTypes: Array.from(item.mealTypes),
+      name: item.name,
+      category: item.category,
+      breakdown: Array.from(item.breakdown.entries()).map(([ownerId, quantity]) => ({
+        ownerId,
+        quantity,
+      })),
     }));
   }
 
@@ -205,7 +330,8 @@ export class ShoppingService {
     userId: string,
     weekStartDate: string,
     aggregates: {
-      ingredientId: string;
+      itemKey: string;
+      ingredientId: string | null;
       unit: Unit;
       totalQuantity: number;
       name: string;
@@ -225,20 +351,19 @@ export class ShoppingService {
     const keepValues: string[] = [];
     const keepParams: unknown[] = [userId, weekStartDate];
     for (const item of aggregates) {
-      keepParams.push(item.ingredientId, item.unit);
-      const ingredientParam = keepParams.length - 1;
-      const unitParam = keepParams.length;
-      keepValues.push(`($${ingredientParam}::uuid, $${unitParam}::text)`);
+      keepParams.push(item.itemKey);
+      const keyParam = keepParams.length;
+      keepValues.push(`($${keyParam}::text)`);
     }
 
     await this.db.query(
-      `WITH keep(ingredient_id, unit) AS (
+      `WITH keep(item_key) AS (
          VALUES ${keepValues.join(', ')}
        )
        DELETE FROM shopping_items si
        WHERE si.user_id = $1 AND si.week_start_date = $2::date AND si.source = 'MENU'
          AND NOT EXISTS (
-           SELECT 1 FROM keep k WHERE k.ingredient_id = si.ingredient_id AND k.unit = si.unit
+           SELECT 1 FROM keep k WHERE k.item_key = si.item_key
          )`,
       keepParams,
     );
@@ -246,19 +371,20 @@ export class ShoppingService {
     const values: string[] = [];
     const params: unknown[] = [userId, weekStartDate];
     for (const item of aggregates) {
-      params.push(item.ingredientId, item.name, item.category, item.unit, item.totalQuantity);
-      const base = params.length - 4;
+      params.push(item.ingredientId, item.itemKey, item.name, item.category, item.unit, item.totalQuantity);
+      const base = params.length - 5;
       values.push(
-        `($1, $2, 'MENU', $${base}, $${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, NULL, false)`,
+        `($1, $2, 'MENU', $${base}, $${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, NULL, false)`,
       );
     }
 
     await this.db.query(
       `INSERT INTO shopping_items
-       (user_id, week_start_date, source, ingredient_id, name, category, unit, quantity, meal_type, purchased)
+       (user_id, week_start_date, source, ingredient_id, item_key, name, category, unit, quantity, meal_type, purchased)
        VALUES ${values.join(', ')}
-       ON CONFLICT (user_id, week_start_date, source, ingredient_id, unit)
+       ON CONFLICT (user_id, week_start_date, source, item_key)
        DO UPDATE SET
+         ingredient_id = COALESCE(EXCLUDED.ingredient_id, shopping_items.ingredient_id),
          name = EXCLUDED.name,
          category = EXCLUDED.category,
          quantity = EXCLUDED.quantity,
@@ -271,28 +397,37 @@ export class ShoppingService {
     userId: string,
     weekStartDate: string,
     aggregates: {
-      ingredientId: string;
+      itemKey: string;
+      ingredientId: string | null;
       unit: Unit;
       totalQuantity: number;
       name: string;
       category: string | null;
       mealTypes: MealType[];
+      breakdown: Array<{ label: string; quantity: number }>;
     }[],
+    partnerIds: string[],
+    labelMap: Map<string, string>,
   ) {
+    const ownerIds = [userId, ...partnerIds];
     const result = await this.db.query<ShoppingItemRow>(
-      `SELECT id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased
+      `SELECT id, source, user_id AS owner_id, ingredient_id, item_key, name, category, unit, quantity, warehouse, meal_type, purchased
        FROM shopping_items
-       WHERE user_id = $1 AND week_start_date = $2::date`,
-      [userId, weekStartDate],
+       WHERE week_start_date = $2::date
+         AND (
+           (source = 'MENU' AND user_id = $1)
+           OR (source = 'OFF_MENU' AND user_id = ANY($3::uuid[]))
+         )`,
+      [userId, weekStartDate, ownerIds],
     );
 
     const aggregateMap = new Map(
-      aggregates.map((item) => [`${item.ingredientId}:${item.unit}`, item]),
+      aggregates.map((item) => [item.itemKey, item]),
     );
 
     return result.rows.map((row) => {
-      if (row.source === 'MENU' && row.ingredient_id) {
-        const aggregate = aggregateMap.get(`${row.ingredient_id}:${row.unit}`);
+      if (row.source === 'MENU') {
+        const aggregate = aggregateMap.get(row.item_key);
         const mealType =
           aggregate && aggregate.mealTypes.length === 1
             ? aggregate.mealTypes[0]
@@ -302,18 +437,21 @@ export class ShoppingService {
         return {
           id: row.id,
           source: row.source,
+          ownerId: row.owner_id ?? userId,
+          ownedByUser: true,
           ingredientId: row.ingredient_id,
-          name: row.name,
-          category: row.category,
+          name: aggregate?.name ?? row.name,
+          category: aggregate?.category ?? row.category,
           unit: row.unit,
           totalQuantity: aggregate ? aggregate.totalQuantity : Number(row.quantity),
           warehouse: Number(row.warehouse),
           mealType,
           purchased: row.purchased,
+          breakdown: aggregate?.breakdown,
         } satisfies ShoppingItemDto;
       }
 
-      return this.mapRow(row);
+      return this.mapRow(row, userId, labelMap);
     });
   }
 
@@ -370,10 +508,22 @@ export class ShoppingService {
     });
   }
 
-  private mapRow(row: ShoppingItemRow): ShoppingItemDto {
+  private mapRow(
+    row: ShoppingItemRow,
+    currentUserId?: string,
+    labelMap?: Map<string, string>,
+  ): ShoppingItemDto {
+    const ownerId = row.owner_id ?? currentUserId ?? '';
+    const ownedByUser = currentUserId ? ownerId === currentUserId : true;
+    const ownerLabel =
+      labelMap && ownerId
+        ? labelMap.get(ownerId) ?? (ownedByUser ? 'You' : 'Collaborator')
+        : undefined;
     return {
       id: row.id,
       source: row.source,
+      ownerId,
+      ownedByUser,
       ingredientId: row.ingredient_id,
       name: row.name,
       category: row.category,
@@ -382,12 +532,15 @@ export class ShoppingService {
       warehouse: Number(row.warehouse),
       mealType: row.meal_type,
       purchased: row.purchased,
+      breakdown: ownerLabel
+        ? [{ label: ownerLabel, quantity: Number(row.quantity) }]
+        : undefined,
     };
   }
 
   private async getOffMenu(userId: string, id: string, weekStartDate: string) {
     const result = await this.db.query<ShoppingItemRow>(
-      `SELECT id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased
+      `SELECT id, source, user_id AS owner_id, ingredient_id, item_key, name, category, unit, quantity, warehouse, meal_type, purchased
        FROM shopping_items
        WHERE id = $1 AND user_id = $2 AND week_start_date = $3::date AND source = 'OFF_MENU'`,
       [id, userId, weekStartDate],
@@ -395,6 +548,10 @@ export class ShoppingService {
     if (result.rowCount === 0) {
       throw new NotFoundException('Off-menu item not found');
     }
-    return this.mapRow(result.rows[0]);
+    return this.mapRow(result.rows[0], userId);
+  }
+
+  private buildItemKey(name: string, unit: Unit) {
+    return `${name.trim().toLowerCase()}|${unit}`;
   }
 }

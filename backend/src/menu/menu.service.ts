@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { MealType } from '../common/enums/meal-type.enum';
 import { Unit } from '../common/enums/unit.enum';
 import { formatDateToIso, getCurrentRomeDate, getIsoWeekStart } from '../common/utils/time';
+import { CollaborationService } from '../collaboration/collaboration.service';
 import { AddMealItemDto } from './dto/add-meal-item.dto';
 import { UpdateMealItemDto } from './dto/update-meal-item.dto';
 
@@ -44,11 +45,15 @@ const MEAL_TYPES_ORDER: MealType[] = [
 
 @Injectable()
 export class MenuService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly collaborationService: CollaborationService,
+  ) {}
 
-  async getCurrentMenu(userId: string) {
+  async getCurrentMenu(currentUserId: string, ownerUserId?: string) {
+    const ownerId = await this.resolveOwnerId(currentUserId, ownerUserId);
     const weekStartDate = this.getCurrentWeekStartDateInternal();
-    const menuId = await this.ensureCurrentMenu(userId, weekStartDate);
+    const menuId = await this.ensureCurrentMenu(ownerId, weekStartDate);
     const days = await this.loadMenuDays(menuId);
     return { weekStartDate, days };
   }
@@ -63,9 +68,15 @@ export class MenuService {
     return this.getCurrentWeekStartDateInternal();
   }
 
-  async addMealItem(userId: string, mealId: string, dto: AddMealItemDto) {
+  async addMealItem(
+    currentUserId: string,
+    mealId: string,
+    dto: AddMealItemDto,
+    ownerUserId?: string,
+  ) {
+    const ownerId = await this.resolveOwnerId(currentUserId, ownerUserId);
     const weekStartDate = this.getCurrentWeekStartDateInternal();
-    const meal = await this.getMealForCurrentWeek(userId, mealId, weekStartDate);
+    const meal = await this.getMealForCurrentWeek(ownerId, mealId, weekStartDate);
 
     const ingredient = await this.db.query<{
       allowed_meal_types: MealType[] | null;
@@ -74,7 +85,7 @@ export class MenuService {
       `SELECT allowed_meal_types, deleted_at
        FROM ingredients
        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
-      [dto.ingredientId, userId],
+      [dto.ingredientId, ownerId],
     );
     if (ingredient.rowCount === 0) {
       throw new NotFoundException('Ingredient not found');
@@ -105,9 +116,15 @@ export class MenuService {
     };
   }
 
-  async updateMealItem(userId: string, itemId: string, dto: UpdateMealItemDto) {
+  async updateMealItem(
+    currentUserId: string,
+    itemId: string,
+    dto: UpdateMealItemDto,
+    ownerUserId?: string,
+  ) {
+    const ownerId = await this.resolveOwnerId(currentUserId, ownerUserId);
     const weekStartDate = this.getCurrentWeekStartDateInternal();
-    await this.assertItemInCurrentWeek(userId, itemId, weekStartDate);
+    await this.assertItemInCurrentWeek(ownerId, itemId, weekStartDate);
 
     const fields: string[] = [];
     const params: unknown[] = [itemId];
@@ -151,9 +168,14 @@ export class MenuService {
     };
   }
 
-  async removeMealItem(userId: string, itemId: string) {
+  async removeMealItem(
+    currentUserId: string,
+    itemId: string,
+    ownerUserId?: string,
+  ) {
+    const ownerId = await this.resolveOwnerId(currentUserId, ownerUserId);
     const weekStartDate = this.getCurrentWeekStartDateInternal();
-    await this.assertItemInCurrentWeek(userId, itemId, weekStartDate);
+    await this.assertItemInCurrentWeek(ownerId, itemId, weekStartDate);
     await this.db.query(`DELETE FROM meal_items WHERE id = $1`, [itemId]);
     return { id: itemId };
   }
@@ -366,5 +388,20 @@ export class MenuService {
       quantity: Number(result.rows[0].quantity),
       unit: result.rows[0].unit,
     };
+  }
+
+  private async resolveOwnerId(currentUserId: string, ownerUserId?: string) {
+    const ownerId = ownerUserId ?? currentUserId;
+    if (ownerId === currentUserId) {
+      return ownerId;
+    }
+    const hasAccess = await this.collaborationService.hasActiveCollaboration(
+      currentUserId,
+      ownerId,
+    );
+    if (!hasAccess) {
+      throw new ForbiddenException('Not allowed to access this menu');
+    }
+    return ownerId;
   }
 }

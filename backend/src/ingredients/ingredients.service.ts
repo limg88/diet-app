@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { MealType } from '../common/enums/meal-type.enum';
 import { Unit } from '../common/enums/unit.enum';
+import { CollaborationService } from '../collaboration/collaboration.service';
 import { Ingredient } from './ingredient.entity';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { ListIngredientsQuery } from './dto/list-ingredients.query';
@@ -23,11 +24,15 @@ type IngredientRow = {
 
 @Injectable()
 export class IngredientsService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly collaborationService: CollaborationService,
+  ) {}
 
   async list(userId: string, query: ListIngredientsQuery) {
+    const ownerId = await this.resolveOwnerId(userId, query.ownerUserId);
     const where: string[] = ['user_id = $1'];
-    const params: unknown[] = [userId];
+    const params: unknown[] = [ownerId];
 
     if (!query.includeDeleted) {
       where.push('deleted_at IS NULL');
@@ -231,5 +236,20 @@ export class IngredientsService {
       return null;
     }
     return value;
+  }
+
+  private async resolveOwnerId(currentUserId: string, ownerUserId?: string) {
+    const ownerId = ownerUserId ?? currentUserId;
+    if (ownerId === currentUserId) {
+      return ownerId;
+    }
+    const hasAccess = await this.collaborationService.hasActiveCollaboration(
+      currentUserId,
+      ownerId,
+    );
+    if (!hasAccess) {
+      throw new ForbiddenException('Not allowed to access ingredients');
+    }
+    return ownerId;
   }
 }

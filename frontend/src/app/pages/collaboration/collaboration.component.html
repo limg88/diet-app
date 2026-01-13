@@ -1,0 +1,136 @@
+<section class="stack">
+  <div class="page-header">
+    <div class="page-header__meta">
+      <h2 class="page-title">Collaboration</h2>
+      <p class="page-subtitle">Invite someone to collaborate and share weekly menus.</p>
+    </div>
+  </div>
+
+  <p-card styleClass="panel">
+    <ng-template pTemplate="title">Invite a collaborator</ng-template>
+    <form [formGroup]="inviteForm" class="invite-form" (ngSubmit)="submitInvite()">
+      <div class="field-block">
+        <label for="collaboration-email">Email</label>
+        <input
+          id="collaboration-email"
+          pInputText
+          type="email"
+          placeholder="friend@example.com"
+          formControlName="email"
+          data-cy="collaboration-invite-email"
+        />
+        <small
+          class="field-error"
+          *ngIf="inviteForm.controls.email.touched && inviteForm.controls.email.invalid"
+        >
+          Please enter a valid email.
+        </small>
+      </div>
+      <button
+        pButton
+        type="submit"
+        label="Send invite"
+        [loading]="savingInvite"
+        data-cy="collaboration-invite-submit"
+      ></button>
+    </form>
+  </p-card>
+
+  <div class="grid-two">
+    <p-card styleClass="panel">
+      <ng-template pTemplate="title">Incoming invites</ng-template>
+      <p-progressSpinner *ngIf="loadingInvites" styleClass="spinner"></p-progressSpinner>
+      <div *ngIf="!loadingInvites && incoming.length === 0" class="state">
+        <div class="state__title">No incoming invites</div>
+        <p>When someone invites you, it will show here.</p>
+      </div>
+      <div
+        class="invite-list"
+        *ngIf="!loadingInvites && incoming.length > 0"
+        data-cy="collaboration-incoming"
+      >
+        <div class="invite-card" *ngFor="let invite of incoming; trackBy: trackById">
+          <div>
+            <strong>{{ invite.sender_email }}</strong>
+            <p class="muted">Sent {{ invite.created_at | date: 'medium' }}</p>
+          </div>
+          <div class="invite-actions">
+            <button
+              pButton
+              type="button"
+              label="Accept"
+              class="p-button-success p-button-sm"
+              (click)="acceptInvite(invite)"
+              [disabled]="invite.status !== 'pending' || isBusy(invite)"
+              data-cy="collaboration-accept"
+            ></button>
+            <button
+              pButton
+              type="button"
+              label="Reject"
+              class="p-button-secondary p-button-sm"
+              (click)="rejectInvite(invite)"
+              [disabled]="invite.status !== 'pending' || isBusy(invite)"
+              data-cy="collaboration-reject"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </p-card>
+
+    <p-card styleClass="panel">
+      <ng-template pTemplate="title">Outgoing invites</ng-template>
+      <p-progressSpinner *ngIf="loadingInvites" styleClass="spinner"></p-progressSpinner>
+      <div *ngIf="!loadingInvites && outgoing.length === 0" class="state">
+        <div class="state__title">No outgoing invites</div>
+        <p>Send an invite to start collaborating.</p>
+      </div>
+      <div
+        class="invite-list"
+        *ngIf="!loadingInvites && outgoing.length > 0"
+        data-cy="collaboration-outgoing"
+      >
+        <div class="invite-card" *ngFor="let invite of outgoing; trackBy: trackById">
+          <div>
+            <strong>{{ invite.recipient_email }}</strong>
+            <p class="muted">Status: {{ invite.status }}</p>
+          </div>
+          <button
+            pButton
+            type="button"
+            label="Revoke"
+            class="p-button-danger p-button-sm"
+            (click)="revokeInvite(invite)"
+            [disabled]="invite.status !== 'pending' || isBusy(invite)"
+            data-cy="collaboration-revoke"
+          ></button>
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <p-card styleClass="panel">
+    <ng-template pTemplate="title">Active collaborators</ng-template>
+    <p-progressSpinner *ngIf="loadingPartners" styleClass="spinner"></p-progressSpinner>
+    <div *ngIf="!loadingPartners && partners.length === 0" class="state">
+      <div class="state__title">No collaborators yet</div>
+      <p>Accepted invites will appear here.</p>
+    </div>
+    <div class="partner-list" *ngIf="!loadingPartners && partners.length > 0" data-cy="collaboration-partners">
+      <div class="partner-card" *ngFor="let partner of partners; trackBy: trackByPartnerId">
+        <div>
+          <strong>{{ partner.email }}</strong>
+          <p class="muted">Since {{ partner.since | date: 'mediumDate' }}</p>
+        </div>
+        <a
+          pButton
+          type="button"
+          label="Open menu"
+          class="p-button-text"
+          [routerLink]="['/collaborators', partner.user_id, 'menu']"
+          data-cy="collaboration-open-menu"
+        ></a>
+      </div>
+    </div>
+  </p-card>
+</section>

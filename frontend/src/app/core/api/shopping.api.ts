@@ -21,6 +21,12 @@ export class ShoppingApi {
     return this.http.patch(`${environment.apiBaseUrl}/shopping/current/items/${id}`, { purchased });
   }
 
+  updateWarehouse(id: string, warehouse: number) {
+    return this.http.patch(`${environment.apiBaseUrl}/shopping/current/items/${id}/warehouse`, {
+      warehouse,
+    });
+  }
+
   createOffMenu(payload: { name: string; category?: string; unit: string; quantity: number }) {
     return this.http.post(`${environment.apiBaseUrl}/shopping/current/off-menu`, payload);
   }

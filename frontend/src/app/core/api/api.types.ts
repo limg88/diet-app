@@ -52,6 +52,7 @@ export type ShoppingItem = {
   category: string | null;
   unit: Unit;
   totalQuantity: number;
+  warehouse: number;
   mealType: string | null;
   purchased: boolean;
 };

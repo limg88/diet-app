@@ -42,6 +42,7 @@ export class ShoppingComponent implements OnInit {
   loading = false;
   items: ShoppingItem[] = [];
   loadError: string | null = null;
+  private warehouseBaseline = new Map<string, number>();
 
   filters = this.fb.group({
     search: [''],
@@ -123,6 +124,9 @@ export class ShoppingComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.items = response.items;
+          this.warehouseBaseline = new Map(
+            response.items.map((item) => [item.id, this.normalizeWarehouse(item.warehouse)]),
+          );
           this.loading = false;
         },
         error: (err) => {
@@ -144,6 +148,40 @@ export class ShoppingComponent implements OnInit {
         this.toastService.error(err?.error?.message ?? 'Failed to update');
       },
     });
+  }
+
+  commitWarehouse(item: ShoppingItem) {
+    const normalized = this.normalizeWarehouse(item.warehouse);
+    item.warehouse = normalized;
+    const previous = this.warehouseBaseline.get(item.id);
+    if (previous === normalized) {
+      return;
+    }
+    this.shoppingApi.updateWarehouse(item.id, normalized).subscribe({
+      next: () => {
+        this.warehouseBaseline.set(item.id, normalized);
+      },
+      error: (err) => {
+        if (previous !== undefined) {
+          item.warehouse = previous;
+        }
+        this.toastService.error(err?.error?.message ?? 'Failed to update warehouse');
+      },
+    });
+  }
+
+  getToPurchase(item: ShoppingItem) {
+    const total = Number(item.totalQuantity ?? 0);
+    const warehouse = this.normalizeWarehouse(item.warehouse);
+    return Math.max(total - warehouse, 0);
+  }
+
+  private normalizeWarehouse(value: number | null | undefined) {
+    const normalized = Number(value);
+    if (!Number.isFinite(normalized) || normalized < 0) {
+      return 0;
+    }
+    return normalized;
   }
 
   startEdit(item: ShoppingItem) {

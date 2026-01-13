@@ -7,6 +7,7 @@ import { CreateOffMenuDto } from './dto/create-off-menu.dto';
 import { ListShoppingQuery } from './dto/list-shopping.query';
 import { UpdateOffMenuDto } from './dto/update-off-menu.dto';
 import { UpdatePurchasedDto } from './dto/update-purchased.dto';
+import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 
 type AggregatedMenuRow = {
   ingredient_id: string;
@@ -25,6 +26,7 @@ type ShoppingItemRow = {
   category: string | null;
   unit: Unit;
   quantity: string;
+  warehouse: string;
   meal_type: string | null;
   purchased: boolean;
 };
@@ -37,6 +39,7 @@ type ShoppingItemDto = {
   category: string | null;
   unit: Unit;
   totalQuantity: number;
+  warehouse: number;
   mealType: string | null;
   purchased: boolean;
 };
@@ -67,7 +70,7 @@ export class ShoppingService {
       `UPDATE shopping_items
        SET purchased = $1, updated_at = now()
        WHERE id = $2 AND user_id = $3 AND week_start_date = $4::date
-       RETURNING id, source, ingredient_id, name, category, unit, quantity, meal_type, purchased`,
+       RETURNING id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased`,
       [dto.purchased, id, userId, weekStartDate],
     );
     if (result.rowCount === 0) {
@@ -83,9 +86,25 @@ export class ShoppingService {
       category: row.category,
       unit: row.unit,
       totalQuantity: Number(row.quantity),
+      warehouse: Number(row.warehouse),
       mealType: row.meal_type,
       purchased: row.purchased,
     };
+  }
+
+  async updateWarehouse(userId: string, id: string, dto: UpdateWarehouseDto) {
+    const weekStartDate = await this.menuService.getCurrentWeekStartDate();
+    const result = await this.db.query<ShoppingItemRow>(
+      `UPDATE shopping_items
+       SET warehouse = $1, updated_at = now()
+       WHERE id = $2 AND user_id = $3 AND week_start_date = $4::date
+       RETURNING id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased`,
+      [dto.warehouse, id, userId, weekStartDate],
+    );
+    if (result.rowCount === 0) {
+      throw new NotFoundException('Shopping item not found');
+    }
+    return this.mapRow(result.rows[0]);
   }
 
   async createOffMenu(userId: string, dto: CreateOffMenuDto) {
@@ -94,7 +113,7 @@ export class ShoppingService {
       `INSERT INTO shopping_items
        (user_id, week_start_date, source, ingredient_id, name, category, unit, quantity, meal_type, purchased)
        VALUES ($1, $2, 'OFF_MENU', NULL, $3, $4, $5, $6, NULL, false)
-       RETURNING id, source, ingredient_id, name, category, unit, quantity, meal_type, purchased`,
+       RETURNING id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased`,
       [userId, weekStartDate, dto.name, dto.category ?? null, dto.unit, dto.quantity],
     );
     return this.mapRow(result.rows[0]);
@@ -133,7 +152,7 @@ export class ShoppingService {
       `UPDATE shopping_items
        SET ${fields.join(', ')}, updated_at = now()
        WHERE id = $1 AND user_id = $2 AND week_start_date = $3::date AND source = 'OFF_MENU'
-       RETURNING id, source, ingredient_id, name, category, unit, quantity, meal_type, purchased`,
+       RETURNING id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased`,
       params,
     );
     if (result.rowCount === 0) {
@@ -261,7 +280,7 @@ export class ShoppingService {
     }[],
   ) {
     const result = await this.db.query<ShoppingItemRow>(
-      `SELECT id, source, ingredient_id, name, category, unit, quantity, meal_type, purchased
+      `SELECT id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased
        FROM shopping_items
        WHERE user_id = $1 AND week_start_date = $2::date`,
       [userId, weekStartDate],
@@ -288,6 +307,7 @@ export class ShoppingService {
           category: row.category,
           unit: row.unit,
           totalQuantity: aggregate ? aggregate.totalQuantity : Number(row.quantity),
+          warehouse: Number(row.warehouse),
           mealType,
           purchased: row.purchased,
         } satisfies ShoppingItemDto;
@@ -359,6 +379,7 @@ export class ShoppingService {
       category: row.category,
       unit: row.unit,
       totalQuantity: Number(row.quantity),
+      warehouse: Number(row.warehouse),
       mealType: row.meal_type,
       purchased: row.purchased,
     };
@@ -366,7 +387,7 @@ export class ShoppingService {
 
   private async getOffMenu(userId: string, id: string, weekStartDate: string) {
     const result = await this.db.query<ShoppingItemRow>(
-      `SELECT id, source, ingredient_id, name, category, unit, quantity, meal_type, purchased
+      `SELECT id, source, ingredient_id, name, category, unit, quantity, warehouse, meal_type, purchased
        FROM shopping_items
        WHERE id = $1 AND user_id = $2 AND week_start_date = $3::date AND source = 'OFF_MENU'`,
       [id, userId, weekStartDate],

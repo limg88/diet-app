@@ -59,6 +59,31 @@
   margin-top: var(--space-md);
 }
 
+.warehouse-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.warehouse-field {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.warehouse-field label {
+  font-size: var(--font-size-xs);
+  color: var(--text-color-secondary);
+}
+
+.warehouse-field--readonly .warehouse-value {
+  padding: var(--space-sm);
+  border-radius: var(--space-sm);
+  background: var(--surface-a);
+  border: 1px solid var(--border-color);
+  font-weight: var(--font-weight-medium);
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -126,6 +151,22 @@
   width: 100%;
 }
 
+.table-number {
+  text-align: right;
+}
+
+:host ::ng-deep .warehouse-input {
+  width: 6.5rem;
+}
+
+:host ::ng-deep .warehouse-input .p-inputnumber-input {
+  width: 6.5rem;
+}
+
+:host ::ng-deep .warehouse-input .p-inputtext {
+  text-align: right;
+}
+
 /* Desktop Styles */
 @media (min-width: 768px) {
   .shopping-list-mobile {
@@ -143,5 +184,11 @@
   .inline {
     grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
     align-items: end;
+  }
+}
+
+@media (min-width: 480px) {
+  .warehouse-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

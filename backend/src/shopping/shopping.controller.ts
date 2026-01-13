@@ -5,6 +5,7 @@ import { CreateOffMenuDto } from './dto/create-off-menu.dto';
 import { ListShoppingQuery } from './dto/list-shopping.query';
 import { UpdateOffMenuDto } from './dto/update-off-menu.dto';
 import { UpdatePurchasedDto } from './dto/update-purchased.dto';
+import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 import { ShoppingService } from './shopping.service';
 
 type RequestUser = {
@@ -29,6 +30,15 @@ export class ShoppingController {
     @Body() dto: UpdatePurchasedDto,
   ) {
     return this.shoppingService.updatePurchased(user.id, id, dto);
+  }
+
+  @Patch('current/items/:id/warehouse')
+  updateWarehouse(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateWarehouseDto,
+  ) {
+    return this.shoppingService.updateWarehouse(user.id, id, dto);
   }
 
   @Post('current/off-menu')

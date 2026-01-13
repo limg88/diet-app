@@ -1,0 +1,147 @@
+/* Hide desktop table on mobile */
+.shopping-list-desktop {
+  display: none;
+}
+
+.filters {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.inline {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.shopping-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  margin-top: 15px;
+  border-radius: var(--space-md);
+  background: var(--surface-b);
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.info h4 {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-color);
+  margin-bottom: var(--space-xs);
+}
+
+.info p {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-color-secondary);
+  flex-grow: 1;
+}
+
+.meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.chip-amount {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  color: var(--primary);
+}
+.chip-source {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+.chip-meal {
+  background: color-mix(in srgb, var(--info) 15%, transparent);
+  color: var(--info);
+}
+
+.shopping-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.spinner {
+  margin: var(--space-xl) auto;
+  display: block;
+}
+
+.empty {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-color-secondary);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+}
+
+:host ::ng-deep .offmenu-dialog .p-dialog-header {
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--border-color);
+}
+
+:host ::ng-deep .offmenu-dialog .p-dialog-content {
+  padding: var(--space-xl);
+}
+
+:host ::ng-deep .offmenu-dialog .p-dialog-footer {
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Make PrimeNG inputs full width in forms */
+:host ::ng-deep .filters .p-select,
+:host ::ng-deep .inline .p-select,
+:host ::ng-deep .inline .p-inputnumber {
+  width: 100%;
+}
+
+/* Desktop Styles */
+@media (min-width: 768px) {
+  .shopping-list-mobile {
+    display: none;
+  }
+  .shopping-list-desktop {
+    display: block;
+  }
+
+  .filters {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) auto;
+    align-items: end;
+  }
+
+  .inline {
+    grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+    align-items: end;
+  }
+}

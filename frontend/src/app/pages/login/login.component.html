@@ -1,0 +1,50 @@
+<div class="login">
+  <div class="login__panel card">
+    <div class="login__header">
+      <h1 class="login__title">Plan your week, eat better.</h1>
+      <p class="login__subtitle">Access your menu, ingredients, and shopping list.</p>
+    </div>
+
+    <form [formGroup]="form" class="login__form" (ngSubmit)="submit()" data-cy="login-form">
+      <div class="field">
+        <label>Email</label>
+        <input
+          pInputText
+          type="email"
+          formControlName="email"
+          placeholder="you@example.com"
+          data-cy="login-email"
+        />
+        <small class="field-error" *ngIf="form.controls.email.touched && form.controls.email.invalid">
+          Enter a valid email.
+        </small>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <p-password
+          formControlName="password"
+          [feedback]="false"
+          placeholder="min 8 characters"
+          inputId="login-password"
+        ></p-password>
+        <small class="field-error" *ngIf="form.controls.password.touched && form.controls.password.invalid">
+          Password must be at least 8 characters.
+        </small>
+      </div>
+
+      <button
+        pButton
+        type="submit"
+        [label]="isRegister ? 'Create account' : 'Login'"
+        [loading]="loading"
+        data-cy="login-submit"
+      ></button>
+    </form>
+
+    <p-divider></p-divider>
+
+    <button pButton type="button" class="p-button-text" (click)="toggleMode()" data-cy="login-toggle">
+      {{ isRegister ? 'Already have an account? Login' : 'New here? Create an account' }}
+    </button>
+  </div>
+</div>

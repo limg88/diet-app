@@ -1,0 +1,38 @@
+/* OVERRIDE PRIMENG VARIABLES WITH OUR CSS VARIABLES */
+
+:root {
+  /* General */
+  --p-font-family: var(--font-family);
+  --p-text-color: var(--text-color);
+  --p-primary-color: var(--primary);
+  --p-primary-contrast-color: var(--primary-contrast);
+  --p-border-radius: var(--radius-sm);
+
+  /* Surface */
+  --p-content-background: var(--surface-a);
+  --p-content-border-color: var(--border-color);
+  --p-surface-border: var(--border-color);
+
+  /* Buttons */
+  --p-button-secondary-background: var(--surface-b);
+  --p-button-secondary-text-color: var(--text-color);
+  --p-button-secondary-hover-background: var(--surface-b);
+  --p-button-secondary-hover-text-color: var(--text-color);
+
+  /* Forms */
+  --p-input-background: var(--surface-a);
+  --p-input-border-color: var(--border-color);
+  --p-input-hover-border-color: var(--primary);
+  --p-input-focus-border-color: var(--primary);
+  --p-input-error-border-color: var(--danger);
+
+  /* Messages */
+  --p-message-success-background: var(--success);
+  --p-message-success-text-color: var(--primary-contrast);
+  --p-message-info-background: var(--info);
+  --p-message-info-text-color: var(--primary-contrast);
+  --p-message-warn-background: var(--warning);
+  --p-message-warn-text-color: var(--primary-contrast);
+  --p-message-error-background: var(--danger);
+  --p-message-error-text-color: var(--primary-contrast);
+}

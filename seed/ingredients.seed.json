@@ -1,0 +1,12 @@
+[
+  { "name": "Pane", "category": "Carboidrati", "defaultUnit": "gr", "allowedMealTypes": ["BREAKFAST", "LUNCH", "DINNER"] },
+  { "name": "Latte", "category": "Latticini", "defaultUnit": "ml", "allowedMealTypes": ["BREAKFAST", "MORNING_SNACK"] },
+  { "name": "Yogurt", "category": "Latticini", "defaultUnit": "gr", "allowedMealTypes": ["BREAKFAST", "MORNING_SNACK", "AFTERNOON_SNACK"] },
+  { "name": "Mela", "category": "Frutta", "defaultUnit": "unit", "allowedMealTypes": [] },
+  { "name": "Pasta", "category": "Carboidrati", "defaultUnit": "gr", "allowedMealTypes": ["LUNCH", "DINNER"] },
+  { "name": "Pollo", "category": "Proteine", "defaultUnit": "gr", "allowedMealTypes": ["LUNCH", "DINNER"] },
+  { "name": "Insalata", "category": "Verdura", "defaultUnit": "gr", "allowedMealTypes": ["LUNCH", "DINNER"] },
+  { "name": "Mandorle", "category": "Snack", "defaultUnit": "gr", "allowedMealTypes": ["MORNING_SNACK", "AFTERNOON_SNACK"] },
+  { "name": "Acqua", "category": "Bevande", "defaultUnit": "ml", "allowedMealTypes": [] },
+  { "name": "Uova", "category": "Proteine", "defaultUnit": "unit", "allowedMealTypes": ["BREAKFAST", "LUNCH", "DINNER"] }
+]

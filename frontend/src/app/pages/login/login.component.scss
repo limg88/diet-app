@@ -1,0 +1,63 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.login {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-lg);
+  background: var(--surface-ground);
+}
+
+.login__panel {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.login__header {
+  text-align: center;
+}
+
+.login__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-sm);
+}
+
+.login__subtitle {
+  font-size: var(--font-size-md);
+  color: var(--text-color-secondary);
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+label {
+  font-weight: var(--font-weight-medium);
+}
+
+/* Make PrimeNG password full width */
+:host ::ng-deep .p-password {
+  width: 100%;
+}
+
+/* Style the text button */
+.p-button-text {
+  color: var(--primary);
+}

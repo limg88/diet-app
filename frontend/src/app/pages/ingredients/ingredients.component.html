@@ -1,0 +1,253 @@
+<section class="stack">
+  <div class="page-header">
+    <div class="page-header__meta">
+      <h2 class="page-title">Ingredients</h2>
+      <p class="page-subtitle">Manage your ingredient database and meal availability.</p>
+    </div>
+    <div class="page-header__actions">
+      <button
+        pButton
+        type="button"
+        label="Add Ingredient"
+        icon="pi pi-plus"
+        (click)="showForm = true"
+        data-cy="ingredient-add-btn"
+      ></button>
+    </div>
+  </div>
+
+  <p-card styleClass="panel panel-filter">
+    <ng-template pTemplate="title">Ingredients - Filters</ng-template>
+    <form [formGroup]="filters" class="p-fluid filters" (ngSubmit)="load()" data-cy="ingredients-filters">
+      <div class="field-block">
+        <label for="ingredients-search">Search</label>
+        <input
+          id="ingredients-search"
+          pInputText
+          type="text"
+          placeholder="Search name"
+          formControlName="search"
+          data-cy="ingredients-search"
+        />
+      </div>
+      <div class="field-block">
+        <label for="ingredients-category">Category</label>
+        <p-select
+          inputId="ingredients-category"
+          [options]="categoryFilterOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Category"
+          formControlName="category"
+          [filter]="true"
+          [editable]="true"
+          data-cy="ingredients-category"
+        ></p-select>
+      </div>
+      <div class="field-block">
+        <label for="ingredients-unit">Unit</label>
+        <p-select
+          inputId="ingredients-unit"
+          [options]="unitOptions"
+          placeholder="Unit"
+          formControlName="unit"
+          data-cy="ingredients-unit"
+        ></p-select>
+      </div>
+      <div class="field-block">
+        <label for="ingredients-mealType">Meal type</label>
+        <p-select
+          inputId="ingredients-mealType"
+          [options]="mealTypeOptions"
+          placeholder="Meal type"
+          formControlName="mealType"
+          data-cy="ingredients-mealType"
+        ></p-select>
+      </div>
+      <button pButton type="submit" label="Apply" class="p-button-info" data-cy="ingredients-apply"></button>
+    </form>
+  </p-card>
+  <p-card styleClass="panel panel-list">
+    <ng-template pTemplate="title">Ingredients</ng-template>
+
+    <p-progressSpinner *ngIf="loading" styleClass="spinner"></p-progressSpinner>
+    <div *ngIf="!loading && loadError" class="state state--error">
+      <i class="pi pi-exclamation-triangle state__icon" aria-hidden="true"></i>
+      <div class="state__title">Couldn't load ingredients</div>
+      <p>{{ loadError }}</p>
+      <button pButton type="button" label="Retry" class="p-button-text" (click)="load()"></button>
+    </div>
+    <div *ngIf="!loading && !loadError && items.length === 0" class="state">
+      <i class="pi pi-box state__icon" aria-hidden="true"></i>
+      <div class="state__title">No ingredients yet</div>
+      <p>Add your first ingredient to start building the menu.</p>
+    </div>
+
+    <!-- Mobile View: Cards -->
+    <div class="ingredient-list-mobile" *ngIf="!loading && items.length > 0">
+      <div class="ingredient-card" *ngFor="let item of items" data-cy="ingredient-card">
+        <div>
+          <h4>{{ item.name }}</h4>
+          <p>{{ item.category || 'Uncategorized' }} | {{ item.defaultUnit }}</p>
+          <p class="meta">
+            Default {{ item.defaultQuantity }} {{ item.defaultUnit }} ·
+            {{ item.allowedMealTypes && item.allowedMealTypes.length
+              ? item.allowedMealTypes.join(', ')
+              : 'All meals' }}
+          </p>
+        </div>
+        <div class="actions">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-pencil"
+            class="p-button-secondary action-btn"
+            (click)="startEdit(item)"
+            data-cy="ingredient-edit"
+            aria-label="Edit ingredient"
+          ></button>
+          <button
+            pButton
+            type="button"
+            icon="pi pi-trash"
+            class="p-button-danger action-btn"
+            (click)="remove(item)"
+            data-cy="ingredient-delete"
+            aria-label="Delete ingredient"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop View: Table -->
+    <div class="ingredient-list-desktop" *ngIf="!loading && items.length > 0">
+      <p-table [value]="items" styleClass="p-datatable-striped" data-cy="ingredients-table">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Default Unit</th>
+            <th>Default Qty</th>
+            <th>Allowed Meals</th>
+            <th style="width: 10rem">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.category || 'N/A' }}</td>
+            <td>{{ item.defaultUnit }}</td>
+            <td>{{ item.defaultQuantity }}</td>
+            <td>
+              {{ item.allowedMealTypes && item.allowedMealTypes.length
+                ? item.allowedMealTypes.join(', ')
+                : 'All' }}
+            </td>
+            <td>
+              <div class="actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-secondary p-button-sm"
+                  (click)="startEdit(item)"
+                  data-cy="ingredient-edit"
+                  aria-label="Edit ingredient"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-danger p-button-sm"
+                  (click)="remove(item)"
+                  data-cy="ingredient-delete"
+                  aria-label="Delete ingredient"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-card>
+
+  <p-dialog
+    [(visible)]="showForm"
+    [modal]="true"
+    styleClass="ingredient-dialog"
+    [style]="{width: 'min(92vw, 640px)'}"
+    [header]="editing ? 'Edit ingredient' : 'Add ingredient'"
+    (onHide)="clearEdit()"
+  >
+    <form [formGroup]="form" class="p-fluid" (ngSubmit)="submit()" data-cy="ingredients-form">
+      <div class="field-block">
+        <label for="name">Name</label>
+        <input id="name" pInputText type="text" formControlName="name" data-cy="ingredient-name" />
+        <small class="field-error" *ngIf="form.controls.name.touched && form.controls.name.invalid">
+          Name is required.
+        </small>
+      </div>
+      <div class="field-block">
+        <label for="category">Category (optional)</label>
+        <p-select
+          inputId="category"
+          [options]="categoryOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Category"
+          formControlName="category"
+          [filter]="true"
+          [editable]="true"
+          [appendTo]="'body'"
+          data-cy="ingredient-category"
+        ></p-select>
+      </div>
+      <div class="field-block">
+        <label for="unit">Default Unit</label>
+        <p-select inputId="unit" [options]="unitOptions" formControlName="defaultUnit" data-cy="ingredient-unit"></p-select>
+        <small class="field-error" *ngIf="form.controls.defaultUnit.touched && form.controls.defaultUnit.invalid">
+          Unit is required.
+        </small>
+      </div>
+      <div class="field-block">
+        <label for="defaultQuantity">Default Quantity</label>
+        <p-inputNumber
+          inputId="defaultQuantity"
+          [min]="0.000001"
+          [useGrouping]="false"
+          formControlName="defaultQuantity"
+          data-cy="ingredient-defaultQuantity"
+        ></p-inputNumber>
+        <small class="field-error" *ngIf="form.controls.defaultQuantity.touched && form.controls.defaultQuantity.invalid">
+          Quantity must be greater than 0.
+        </small>
+      </div>
+      <div class="field-block">
+        <label for="allowedMeals">Allowed Meals (optional)</label>
+        <p-multiSelect
+          inputId="allowedMeals"
+          [options]="mealTypeOptions"
+          formControlName="allowedMealTypes"
+          placeholder="Select meals"
+          [appendTo]="'body'"
+          data-cy="ingredient-allowedMeals"
+        ></p-multiSelect>
+        <small class="field-hint">Leave empty to allow all meals.</small>
+      </div>
+      <div class="form-actions">
+        <button pButton type="button" label="Cancel" class="p-button-secondary" (click)="clearEdit()"></button>
+        <button
+          pButton
+          type="submit"
+          [label]="editing ? 'Update' : 'Add'"
+          class="p-button-success"
+          [loading]="saving"
+          data-cy="ingredient-submit"
+        ></button>
+      </div>
+    </form>
+  </p-dialog>
+</section>
+
+
+

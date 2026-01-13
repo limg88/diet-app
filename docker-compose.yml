@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    container_name: dietapp_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dietapp
+      POSTGRES_PASSWORD: dietapp
+      POSTGRES_DB: dietapp
+    ports:
+      - "5433:5432"
+    volumes:
+      - dietapp_pgdata:/var/lib/postgresql/data
+  backend:
+    build:
+      context: ./backend
+    container_name: dietapp_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://dietapp:dietapp@db:5432/dietapp
+      JWT_SECRET: change-me
+      TZ: Europe/Rome
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+  frontend:
+    build:
+      context: ./frontend
+    container_name: dietapp_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
+volumes:
+  dietapp_pgdata:

@@ -1,0 +1,50 @@
+<div class="shell">
+  <header class="shell__header">
+    <div class="brand">
+      <span class="brand__mark">Diet</span>
+      <span class="brand__sub">Week</span>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Logout"
+      icon="pi pi-sign-out"
+      class="p-button-text"
+      (click)="logout()"
+      data-cy="logout-mobile"
+      aria-label="Logout"
+    ></button>
+  </header>
+
+  <main class="shell__content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <nav class="shell__nav">
+    <a routerLink="/menu" routerLinkActive="active" class="nav__item" data-cy="nav-menu">
+      <i class="pi pi-calendar"></i>
+      <span>Menu</span>
+    </a>
+    <a routerLink="/shopping" routerLinkActive="active" class="nav__item" data-cy="nav-shopping">
+      <i class="pi pi-list"></i>
+      <span>Shopping</span>
+    </a>
+    <a
+      routerLink="/ingredients"
+      routerLinkActive="active"
+      class="nav__item"
+      data-cy="nav-ingredients"
+    >
+      <i class="pi pi-box"></i>
+      <span>Ingredients</span>
+    </a>
+    <a
+      class="nav__item"
+      data-cy="logout-desktop"
+      (click)="logout()"
+    >
+      <i class="pi pi-sign-out"></i>
+      <span>Logout</span>
+    </a>
+  </nav>
+</div>

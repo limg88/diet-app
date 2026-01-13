@@ -1,0 +1,139 @@
+<section class="stack">
+  <div class="page-header">
+    <div class="page-header__meta">
+      <h2 class="page-title">Weekly Menu</h2>
+      <p *ngIf="menu" class="page-subtitle">Week of {{ menu.weekStartDate }}</p>
+    </div>
+  </div>
+
+  <p-progressSpinner *ngIf="loading" styleClass="spinner"></p-progressSpinner>
+  <div *ngIf="!loading && loadError" class="state state--error">
+    <i class="pi pi-exclamation-triangle state__icon" aria-hidden="true"></i>
+    <div class="state__title">Couldn't load menu</div>
+    <p>{{ loadError }}</p>
+    <button pButton type="button" label="Retry" class="p-button-text" (click)="refresh()"></button>
+  </div>
+  <div *ngIf="!loading && !menu && !loadError" class="state">
+    <i class="pi pi-calendar state__icon" aria-hidden="true"></i>
+    <div class="state__title">No menu yet</div>
+    <p>Come back later or refresh to load the current week.</p>
+  </div>
+
+  <!-- Mobile View -->
+  <div class="menu-mobile" *ngIf="!loading && menu">
+    <p-accordion [multiple]="true" [value]="[0]">
+      <p-accordion-panel *ngFor="let day of menu.days; let i = index" [value]="i">
+        <p-accordion-header>{{ dayLabels[i] }}</p-accordion-header>
+        <p-accordion-content>
+          <div class="day-content">
+            <div class="meal-card" *ngFor="let mealType of mealTypes">
+              <ng-container *ngIf="getMeal(day, mealType) as meal">
+                <h5>{{ mealLabel(mealType) }}</h5>
+                <ul class="items" *ngIf="meal.items.length > 0">
+                <li *ngFor="let item of meal.items" data-cy="meal-item">
+                  <span class="item-name" [attr.title]="ingredientLabel(item.ingredientId)">
+                    {{ ingredientLabel(item.ingredientId) }}
+                  </span>
+                  <div class="item-qty">
+                    <p-inputNumber
+                      [min]="0.000001"
+                      [useGrouping]="false"
+                      [(ngModel)]="item.quantity"
+                      (onFocus)="trackItemFocus(item.id, item.quantity)"
+                      (onBlur)="updateItemQuantity(item)"
+                      data-cy="meal-item-quantity"
+                    ></p-inputNumber>
+                    <span class="item-unit">{{ item.unit }}</span>
+                  </div>
+                  <button
+                    pButton
+                    type="button"
+                    class="p-button-text p-button-danger"
+                    icon="pi pi-times"
+                      (click)="removeItem(item.id)"
+                      data-cy="meal-item-remove"
+                      aria-label="Remove meal item"
+                    ></button>
+                  </li>
+                </ul>
+                <p *ngIf="meal.items.length === 0" class="empty-meal">No items yet.</p>
+                <div class="add-item" [attr.data-cy]="'meal-add-' + meal.id">
+                  <label class="visually-hidden" [attr.for]="'meal-ingredient-' + meal.id">
+                    Add ingredient
+                  </label>
+                  <p-select
+                    [options]="ingredients"
+                    optionLabel="name"
+                    optionValue="id"
+                    placeholder="Add ingredient"
+                    [(ngModel)]="getDraft(meal.id).ingredientId"
+                    [attr.data-cy]="'meal-ingredient-' + meal.id"
+                    [inputId]="'meal-ingredient-' + meal.id"
+                    (onChange)="addItem(meal.id)"
+                  ></p-select>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </p-accordion-content>
+      </p-accordion-panel>
+    </p-accordion>
+  </div>
+
+  <!-- Desktop View -->
+  <div class="menu-desktop" *ngIf="!loading && menu">
+    <div class="menu-grid">
+      <div class="header-cell header-cell--day">Day</div>
+      <div class="header-cell" *ngFor="let mealType of mealTypes">{{ mealLabel(mealType) }}</div>
+      <ng-container *ngFor="let day of menu.days; let i = index">
+        <div class="day-label">{{ dayLabels[i] }}</div>
+        <div class="meal-cell" *ngFor="let mealType of mealTypes">
+          <ng-container *ngIf="getMeal(day, mealType) as meal">
+            <ul class="items" *ngIf="meal.items.length > 0">
+              <li *ngFor="let item of meal.items" data-cy="meal-item">
+                <span class="item-name" [attr.title]="ingredientLabel(item.ingredientId)">
+                  {{ ingredientLabel(item.ingredientId) }}
+                </span>
+                <div class="item-qty">
+                  <p-inputNumber
+                    [min]="0.000001"
+                    [useGrouping]="false"
+                    [(ngModel)]="item.quantity"
+                    (onFocus)="trackItemFocus(item.id, item.quantity)"
+                    (onBlur)="updateItemQuantity(item)"
+                    data-cy="meal-item-quantity"
+                  ></p-inputNumber>
+                  <span class="item-unit">{{ item.unit }}</span>
+                </div>
+                <button
+                  pButton
+                  type="button"
+                  class="p-button-text p-button-danger p-button-sm"
+                  icon="pi pi-times"
+                  (click)="removeItem(item.id)"
+                  data-cy="meal-item-remove"
+                  aria-label="Remove meal item"
+                ></button>
+              </li>
+            </ul>
+            <div class="add-item" [attr.data-cy]="'meal-add-' + meal.id">
+              <label class="visually-hidden" [attr.for]="'meal-ingredient-' + meal.id + '-desktop'">
+                Add ingredient
+              </label>
+              <p-select
+                [options]="ingredients"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Add ingredient"
+                [(ngModel)]="getDraft(meal.id).ingredientId"
+                [attr.data-cy]="'meal-ingredient-' + meal.id"
+                [inputId]="'meal-ingredient-' + meal.id + '-desktop'"
+                (onChange)="addItem(meal.id)"
+              ></p-select>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</section>

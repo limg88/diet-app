@@ -1,0 +1,292 @@
+<section class="stack">
+  <div class="page-header">
+    <div class="page-header__meta">
+      <h2 class="page-title">Shopping List</h2>
+      <p class="page-subtitle">Track menu ingredients and off-menu items for the week.</p>
+    </div>
+    <div class="page-header__actions">
+      <button
+        pButton
+        type="button"
+        label="Add off-menu"
+        icon="pi pi-plus"
+        (click)="openOffMenuModal()"
+        data-cy="off-menu-open"
+      ></button>
+    </div>
+  </div>
+
+  <p-card styleClass="panel panel-filter">
+    <ng-template pTemplate="title">Shopping List - Filters</ng-template>
+    <form [formGroup]="filters" class="p-fluid filters" (ngSubmit)="load()" data-cy="shopping-filters">
+      <div class="field-block">
+        <label for="shopping-search">Search</label>
+        <input
+          id="shopping-search"
+          pInputText
+          type="text"
+          placeholder="Search items"
+          formControlName="search"
+          data-cy="shopping-search"
+        />
+      </div>
+      <div class="field-block">
+        <label for="shopping-category">Category</label>
+        <input
+          id="shopping-category"
+          pInputText
+          type="text"
+          placeholder="Category"
+          formControlName="category"
+          data-cy="shopping-category"
+        />
+      </div>
+      <div class="field-block">
+        <label for="shopping-unit">Unit</label>
+        <p-select
+          inputId="shopping-unit"
+          [options]="unitFilterOptions"
+          placeholder="Unit"
+          formControlName="unit"
+          data-cy="shopping-unit"
+        ></p-select>
+      </div>
+      <div class="field-block">
+        <label for="shopping-mealType">Meal type</label>
+        <p-select
+          inputId="shopping-mealType"
+          [options]="mealTypeOptions"
+          placeholder="Meal type"
+          formControlName="mealType"
+          data-cy="shopping-mealType"
+        ></p-select>
+      </div>
+      <div class="field-block">
+        <label for="shopping-source">Source</label>
+        <p-select
+          inputId="shopping-source"
+          [options]="sourceOptions"
+          formControlName="source"
+          data-cy="shopping-source"
+        ></p-select>
+      </div>
+      <div class="field-block">
+        <label for="shopping-purchased">Purchased</label>
+        <p-select
+          inputId="shopping-purchased"
+          [options]="purchasedOptions"
+          formControlName="purchased"
+          data-cy="shopping-purchased"
+        ></p-select>
+      </div>
+      <button pButton type="submit" label="Apply" class="p-button-info" data-cy="shopping-apply"></button>
+    </form>
+  </p-card>
+
+  <p-card styleClass="panel panel-list">
+    <ng-template pTemplate="title">This week</ng-template>
+    <p-progressSpinner *ngIf="loading" styleClass="spinner"></p-progressSpinner>
+    <div *ngIf="!loading && loadError" class="state state--error">
+      <i class="pi pi-exclamation-triangle state__icon" aria-hidden="true"></i>
+      <div class="state__title">Couldn't load shopping list</div>
+      <p>{{ loadError }}</p>
+      <button pButton type="button" label="Retry" class="p-button-text" (click)="load()"></button>
+    </div>
+    <div *ngIf="!loading && !loadError && items.length === 0" class="state">
+      <i class="pi pi-shopping-bag state__icon" aria-hidden="true"></i>
+      <div class="state__title">No items yet</div>
+      <p>Add off-menu items or start from the weekly menu.</p>
+    </div>
+
+    <!-- Mobile View: Cards -->
+    <div class="shopping-list-mobile" *ngIf="!loading && items.length > 0">
+      <div class="shopping-card" *ngFor="let item of items" data-cy="shopping-card">
+        <div class="info">
+          <h4>{{ item.name }}</h4>
+          <p>{{ item.category || 'Uncategorized' }} | {{ item.unit }}</p>
+          <div class="meta-chips">
+            <span class="chip chip-amount">{{ item.totalQuantity }} {{ item.unit }}</span>
+            <span class="chip chip-source">{{ item.source }}</span>
+            <span *ngIf="item.mealType" class="chip chip-meal">{{ item.mealType }}</span>
+          </div>
+        </div>
+        <div class="actions">
+          <div class="toggle">
+            <p-toggleSwitch
+              [ngModel]="item.purchased"
+              (onChange)="togglePurchased(item, $event.checked)"
+              data-cy="shopping-toggle"
+              aria-label="Toggle purchased"
+            ></p-toggleSwitch>
+            <span>{{ item.purchased ? 'Purchased' : 'Pending' }}</span>
+          </div>
+          <ng-container *ngIf="item.source === 'OFF_MENU'">
+            <button
+              pButton
+              type="button"
+              icon="pi pi-pencil"
+              class="p-button-secondary action-btn"
+              (click)="startEdit(item)"
+              data-cy="off-menu-edit"
+              aria-label="Edit off-menu item"
+            ></button>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-trash"
+              class="p-button-danger action-btn"
+              (click)="removeOffMenu(item)"
+              data-cy="off-menu-delete"
+              aria-label="Delete off-menu item"
+            ></button>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop View: Table -->
+    <div class="shopping-list-desktop" *ngIf="!loading && items.length > 0">
+      <p-table [value]="items" styleClass="p-datatable-striped" data-cy="shopping-table">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 4rem">Purchased</th>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Source</th>
+            <th>Meal</th>
+            <th style="width: 10rem">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>
+              <p-toggleSwitch
+                [ngModel]="item.purchased"
+                (onChange)="togglePurchased(item, $event.checked)"
+                data-cy="shopping-toggle"
+                aria-label="Toggle purchased"
+              ></p-toggleSwitch>
+            </td>
+            <td>
+              <strong>{{ item.name }}</strong>
+              <br>
+              <small>{{ item.category || 'Uncategorized' }}</small>
+            </td>
+            <td>{{ item.totalQuantity }} {{ item.unit }}</td>
+            <td>
+              <p-tag [value]="item.source" [severity]="item.source === 'MENU' ? 'info' : 'warn'"></p-tag>
+            </td>
+            <td>
+              <p-tag [value]="item.mealType" *ngIf="item.mealType"></p-tag>
+            </td>
+            <td>
+              <div class="actions" *ngIf="item.source === 'OFF_MENU'">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-secondary p-button-sm"
+                  (click)="startEdit(item)"
+                  data-cy="off-menu-edit"
+                  aria-label="Edit off-menu item"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-danger p-button-sm"
+                  (click)="removeOffMenu(item)"
+                  data-cy="off-menu-delete"
+                  aria-label="Delete off-menu item"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </p-card>
+
+  <p-dialog
+    [(visible)]="showOffMenuForm"
+    [modal]="true"
+    styleClass="offmenu-dialog"
+    [style]="{width: 'min(92vw, 640px)'}"
+    [header]="editingId ? 'Edit off-menu' : 'Add off-menu'"
+    (onHide)="clearEdit()"
+  >
+    <form [formGroup]="offMenuForm" class="p-fluid" (ngSubmit)="submitOffMenu()" data-cy="off-menu-form">
+      <div class="field-block">
+        <label for="off-menu-name">Name</label>
+        <input
+          id="off-menu-name"
+          pInputText
+          type="text"
+          placeholder="Name"
+          formControlName="name"
+          data-cy="off-menu-name"
+        />
+        <small class="field-error" *ngIf="offMenuForm.controls.name.touched && offMenuForm.controls.name.invalid">
+          Name is required.
+        </small>
+      </div>
+      <div class="field-block">
+        <label for="off-menu-category">Category</label>
+        <input
+          id="off-menu-category"
+          pInputText
+          type="text"
+          placeholder="Category"
+          formControlName="category"
+          data-cy="off-menu-category"
+        />
+        <small class="field-hint">Optional, helps sorting.</small>
+      </div>
+      <div class="field-block">
+        <label for="off-menu-unit">Unit</label>
+        <p-select
+          inputId="off-menu-unit"
+          [options]="unitOptions"
+          formControlName="unit"
+          data-cy="off-menu-unit"
+          [appendTo]="'body'"
+        ></p-select>
+        <small class="field-error" *ngIf="offMenuForm.controls.unit.touched && offMenuForm.controls.unit.invalid">
+          Unit is required.
+        </small>
+      </div>
+      <div class="field-block">
+        <label for="off-menu-quantity">Quantity</label>
+        <p-inputNumber
+          inputId="off-menu-quantity"
+          [min]="0.000001"
+          [useGrouping]="false"
+          formControlName="quantity"
+          data-cy="off-menu-quantity"
+        ></p-inputNumber>
+        <small class="field-error" *ngIf="offMenuForm.controls.quantity.touched && offMenuForm.controls.quantity.invalid">
+          Quantity must be greater than 0.
+        </small>
+      </div>
+      <div class="form-actions">
+        <button
+          pButton
+          type="button"
+          class="p-button-secondary"
+          label="Cancel"
+          (click)="clearEdit()"
+          data-cy="off-menu-reset"
+        ></button>
+        <button
+          pButton
+          type="submit"
+          [label]="editingId ? 'Update' : 'Add'"
+          class="p-button-success"
+          data-cy="off-menu-submit"
+        ></button>
+      </div>
+    </form>
+  </p-dialog>
+</section>
+
+

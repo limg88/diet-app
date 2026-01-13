@@ -87,11 +87,6 @@
 
 /* Desktop Layout (from Milestone 2) */
 @media (min-width: 768px) {
-  .shell {
-    grid-template-columns: auto 1fr;
-    grid-template-rows: 1fr;
-  }
-
   .shell__header {
     display: none; /* Hide top header on desktop */
   }

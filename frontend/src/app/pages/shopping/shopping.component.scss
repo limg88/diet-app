@@ -8,11 +8,6 @@
   gap: var(--space-md);
 }
 
-.inline {
-  display: grid;
-  gap: var(--space-md);
-}
-
 .shopping-card {
   display: flex;
   flex-direction: column;
@@ -145,9 +140,7 @@
 }
 
 /* Make PrimeNG inputs full width in forms */
-:host ::ng-deep .filters .p-select,
-:host ::ng-deep .inline .p-select,
-:host ::ng-deep .inline .p-inputnumber {
+:host ::ng-deep .filters .p-select {
   width: 100%;
 }
 
@@ -178,11 +171,6 @@
 
   .filters {
     grid-template-columns: repeat(6, minmax(0, 1fr)) auto;
-    align-items: end;
-  }
-
-  .inline {
-    grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
     align-items: end;
   }
 }

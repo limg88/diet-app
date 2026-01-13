@@ -8,11 +8,6 @@
   gap: var(--space-md);
 }
 
-.inline {
-  display: grid;
-  gap: var(--space-md);
-}
-
 .ingredient-card {
   display: flex;
   justify-content: space-between;
@@ -79,10 +74,7 @@
 }
 
 /* Make PrimeNG selects full width in forms */
-:host ::ng-deep .filters .p-select,
-:host ::ng-deep .inline .p-select,
-:host ::ng-deep .inline .p-multiselect,
-:host ::ng-deep .inline .p-inputnumber {
+:host ::ng-deep .filters .p-select {
   width: 100%;
 }
 
@@ -100,11 +92,6 @@
 
   .filters {
     grid-template-columns: repeat(4, 1fr) auto;
-    align-items: end;
-  }
-
-  .inline {
-    grid-template-columns: 1fr 1fr;
     align-items: end;
   }
 

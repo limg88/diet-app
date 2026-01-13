@@ -197,17 +197,6 @@ p {
   gap: var(--space-lg);
 }
 
-.inline {
-  display: grid;
-  gap: var(--space-md);
-}
-
-@media (min-width: 768px) {
-  .inline {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 /* Forms */
 .field-error {
   font-size: var(--font-size-sm);

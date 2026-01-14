@@ -161,4 +161,98 @@ describe('Shopping list', () => {
       });
     });
   });
+
+  it('shows collaborator quantities in the dedicated column', () => {
+    const apiUrl = Cypress.env('apiUrl');
+    const password = 'password123';
+    const ownerEmail = `shop_owner_${Date.now()}@example.com`;
+    const collabEmail = `shop_collab_${Date.now()}@example.com`;
+
+    cy.request({
+      method: 'POST',
+      url: `${apiUrl}/auth/register`,
+      body: { email: ownerEmail, password },
+      failOnStatusCode: false,
+    }).then(() => {
+      cy.request({
+        method: 'POST',
+        url: `${apiUrl}/auth/register`,
+        body: { email: collabEmail, password },
+        failOnStatusCode: false,
+      }).then(() => {
+        cy.request('POST', `${apiUrl}/auth/login`, { email: ownerEmail, password }).then((loginOwner) => {
+          cy.request('POST', `${apiUrl}/auth/login`, { email: collabEmail, password }).then((loginCollab) => {
+            const tokenOwner = loginOwner.body.accessToken as string;
+            const tokenCollab = loginCollab.body.accessToken as string;
+
+            cy.request({
+              method: 'POST',
+              url: `${apiUrl}/collaboration/invites`,
+              headers: { Authorization: `Bearer ${tokenOwner}` },
+              body: { email: collabEmail },
+            }).then((invite) => {
+              cy.request({
+                method: 'POST',
+                url: `${apiUrl}/collaboration/invites/${invite.body.id}/accept`,
+                headers: { Authorization: `Bearer ${tokenCollab}` },
+              });
+            });
+
+            cy.request({
+              method: 'POST',
+              url: `${apiUrl}/ingredients`,
+              headers: { Authorization: `Bearer ${tokenCollab}` },
+              body: {
+                name: 'Collab Beans',
+                category: 'Protein',
+                defaultUnit: 'gr',
+                defaultQuantity: 120,
+              },
+            }).then((ingredientResponse) => {
+              const ingredientId = ingredientResponse.body.id as string;
+
+              cy.request({
+                method: 'GET',
+                url: `${apiUrl}/menu/current`,
+                headers: { Authorization: `Bearer ${tokenCollab}` },
+              }).then((menuResponse) => {
+                const day1 = menuResponse.body.days[0];
+                const breakfast = day1.meals.find(
+                  (meal: { mealType: string }) => meal.mealType === 'BREAKFAST',
+                );
+
+                cy.request({
+                  method: 'POST',
+                  url: `${apiUrl}/menu/current/meals/${breakfast.id}/items`,
+                  headers: { Authorization: `Bearer ${tokenCollab}` },
+                  body: { ingredientId, quantity: 120, unit: 'gr' },
+                });
+
+                cy.viewport(1280, 800);
+                cy.intercept('GET', '**/api/shopping/current*').as('shoppingList');
+                cy.visit('/shopping', {
+                  onBeforeLoad(win) {
+                    win.localStorage.setItem('dietapp_token', tokenOwner);
+                  },
+                });
+
+                cy.wait('@shoppingList')
+                  .its('response.body.items')
+                  .should('have.length.greaterThan', 0);
+
+                cy.get('[data-cy=shopping-table]', { timeout: 10000 }).should('exist');
+                cy.contains('[data-cy=shopping-table] th', 'Collaborator').should('exist');
+                cy.contains('td', 'Collab Beans', { timeout: 10000 })
+                  .parents('tr')
+                  .within(() => {
+                    cy.get('[data-cy=shopping-collab]').should('contain', collabEmail);
+                    cy.get('[data-cy=shopping-collab]').should('contain', '120 gr');
+                  });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
 });

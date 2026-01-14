@@ -61,11 +61,16 @@ export class IngredientsService {
     }
 
     const { sortColumn, sortDirection } = this.parseSort(query.sort);
-    const pageSize = query.pageSize ?? 20;
-    const page = query.page ?? 1;
-    const offset = (page - 1) * pageSize;
+    const hasPagination = query.pageSize !== undefined || query.page !== undefined;
+    const pageSize = hasPagination ? (query.pageSize ?? 20) : undefined;
+    const page = hasPagination ? (query.page ?? 1) : 1;
+    const offset = hasPagination && pageSize ? (page - 1) * pageSize : undefined;
 
-    params.push(pageSize, offset);
+    const paginationClauses: string[] = [];
+    if (hasPagination && pageSize !== undefined && offset !== undefined) {
+      params.push(pageSize, offset);
+      paginationClauses.push(`LIMIT $${params.length - 1}`, `OFFSET $${params.length}`);
+    }
     const sql = `
       SELECT
         id,
@@ -82,14 +87,13 @@ export class IngredientsService {
       FROM ingredients
       WHERE ${where.join(' AND ')}
       ORDER BY ${sortColumn} ${sortDirection}
-      LIMIT $${params.length - 1}
-      OFFSET $${params.length}
+      ${paginationClauses.join('\n      ')}
     `;
 
     const result = await this.db.query<IngredientRow>(sql, params);
     const items = result.rows.map((row) => this.mapRow(row));
     const total = result.rows.length > 0 ? Number(result.rows[0].total_count ?? 0) : 0;
-    return { items, total, page, pageSize };
+    return { items, total, page, pageSize: pageSize ?? total };
   }
 
   async get(userId: string, id: string) {

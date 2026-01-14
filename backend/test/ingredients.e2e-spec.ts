@@ -99,6 +99,34 @@ describe('Ingredients (e2e)', () => {
     expect(response.body.defaultQuantity).toBe(2);
   });
 
+  it('lists all ingredients when pagination params are omitted', async () => {
+    const creations: Array<Promise<request.Response>> = [];
+    for (let i = 1; i <= 24; i += 1) {
+      creations.push(
+        request(app.getHttpServer())
+          .post('/api/ingredients')
+          .set('Authorization', `Bearer ${token}`)
+          .send({
+            name: `Seed ${i}`,
+            category: 'Seed',
+            defaultUnit: 'gr',
+            defaultQuantity: 100,
+            allowedMealTypes: [],
+          })
+          .expect(201),
+      );
+    }
+    await Promise.all(creations);
+
+    const response = await request(app.getHttpServer())
+      .get('/api/ingredients')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(response.body.total).toBe(25);
+    expect(response.body.items).toHaveLength(25);
+  });
+
   it('soft deletes an ingredient', async () => {
     await request(app.getHttpServer())
       .delete(`/api/ingredients/${ingredientId}`)
@@ -110,14 +138,17 @@ describe('Ingredients (e2e)', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(listResponse.body.total).toBe(0);
+    expect(listResponse.body.total).toBe(24);
+    expect(listResponse.body.items).toHaveLength(24);
 
     const includeDeletedResponse = await request(app.getHttpServer())
       .get('/api/ingredients?includeDeleted=true')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(includeDeletedResponse.body.total).toBe(1);
-    expect(includeDeletedResponse.body.items[0].deletedAt).toBeTruthy();
+    expect(includeDeletedResponse.body.total).toBe(25);
+    expect(includeDeletedResponse.body.items.some((item: { deletedAt: string | null }) => item.deletedAt)).toBe(
+      true,
+    );
   });
 });

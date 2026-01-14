@@ -54,6 +54,30 @@
   margin-top: var(--space-md);
 }
 
+.collab-info {
+  margin-top: var(--space-md);
+  display: grid;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+.collab-label {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.collab-list {
+  display: grid;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.collab-empty {
+  color: var(--text-color-secondary);
+}
+
 .warehouse-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -146,6 +170,10 @@
 
 .table-number {
   text-align: right;
+}
+
+.collab-cell {
+  min-width: 12rem;
 }
 
 :host ::ng-deep .warehouse-input {

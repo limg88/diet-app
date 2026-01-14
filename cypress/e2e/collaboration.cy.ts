@@ -185,4 +185,26 @@ describe('Collaboration', () => {
       });
     });
   });
+
+  it('renders without horizontal overflow on mobile and keeps nav accessible', () => {
+    const password = 'password123';
+    const email = `collab_mobile_${Date.now()}@example.com`;
+
+    registerAndLogin(email, password).then(({ token }) => {
+      cy.viewport(360, 800);
+      cy.visit('/collaboration', {
+        onBeforeLoad(win) {
+          win.localStorage.setItem('dietapp_token', token);
+        },
+      });
+
+      cy.window().then((win) => {
+        const scrollWidth = Math.ceil(win.document.documentElement.scrollWidth);
+        const viewportWidth = Math.ceil(win.innerWidth);
+        expect(scrollWidth).to.be.at.most(viewportWidth);
+      });
+
+      cy.get('[data-cy=nav-collaboration]').should('be.visible');
+    });
+  });
 });

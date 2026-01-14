@@ -102,12 +102,19 @@
     <div class="shopping-list-mobile" *ngIf="!loading && items.length > 0">
       <div class="shopping-card" *ngFor="let item of items" data-cy="shopping-card">
         <div class="info">
-          <h4 [attr.title]="getBreakdownTitle(item)">{{ item.name }}</h4>
+          <h4>{{ item.name }}</h4>
           <p>{{ item.category || 'Uncategorized' }} | {{ item.unit }}</p>
           <div class="meta-chips">
             <span class="chip chip-amount">{{ item.totalQuantity }} {{ item.unit }}</span>
             <span class="chip chip-source">{{ item.source }}</span>
             <span *ngIf="item.mealType" class="chip chip-meal">{{ item.mealType }}</span>
+          </div>
+          <div class="collab-info" *ngIf="getCollaboratorEntries(item) as collabEntries">
+            <span class="collab-label">Collaborators</span>
+            <span *ngIf="collabEntries.length === 0" class="collab-empty">—</span>
+            <div class="collab-list" *ngIf="collabEntries.length > 0" data-cy="shopping-collab-mobile">
+              <span *ngFor="let entry of collabEntries">{{ entry }}</span>
+            </div>
           </div>
           <div class="warehouse-grid">
             <div class="warehouse-field">
@@ -171,6 +178,7 @@
             <th style="width: 4rem">Purchased</th>
             <th>Name</th>
             <th class="table-number">Quantity</th>
+            <th>Collaborator</th>
             <th class="table-number">Warehouse</th>
             <th class="table-number">To purchase</th>
             <th>Source</th>
@@ -190,11 +198,19 @@
               ></p-toggleSwitch>
             </td>
             <td>
-              <strong [attr.title]="getBreakdownTitle(item)">{{ item.name }}</strong>
+              <strong>{{ item.name }}</strong>
               <br>
               <small>{{ item.category || 'Uncategorized' }}</small>
             </td>
             <td class="table-number">{{ item.totalQuantity }} {{ item.unit }}</td>
+            <td class="collab-cell" data-cy="shopping-collab">
+              <ng-container *ngIf="getCollaboratorEntries(item) as collabEntries">
+                <span *ngIf="collabEntries.length === 0" class="collab-empty">—</span>
+                <div class="collab-list" *ngIf="collabEntries.length > 0">
+                  <span *ngFor="let entry of collabEntries">{{ entry }}</span>
+                </div>
+              </ng-container>
+            </td>
             <td class="table-number">
               <p-inputNumber
                 [min]="0"

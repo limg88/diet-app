@@ -24,12 +24,24 @@
   border-radius: var(--space-md);
   border: 1px solid var(--border-color);
   background: var(--surface-b);
+  flex-wrap: wrap;
 }
 
 .invite-actions {
   display: flex;
   gap: var(--space-sm);
   flex-wrap: wrap;
+}
+
+.invite-card > div,
+.partner-card > div {
+  min-width: 0;
+}
+
+.invite-card strong,
+.partner-card strong {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .muted {
@@ -45,5 +57,21 @@
 @media (min-width: 900px) {
   .grid-two {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .invite-card,
+  .partner-card {
+    align-items: flex-start;
+  }
+
+  .invite-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .partner-card a {
+    width: 100%;
   }
 }

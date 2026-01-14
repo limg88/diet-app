@@ -182,13 +182,13 @@ export class ShoppingComponent implements OnInit {
     return Math.max(total - warehouse, 0);
   }
 
-  getBreakdownTitle(item: ShoppingItem) {
+  getCollaboratorEntries(item: ShoppingItem) {
     if (!item.breakdown || item.breakdown.length === 0) {
-      return null;
+      return [];
     }
     return item.breakdown
-      .map((entry) => `${entry.label}: ${entry.quantity} ${item.unit}`)
-      .join(' | ');
+      .filter((entry) => entry.label !== 'You')
+      .map((entry) => `${entry.label}: ${entry.quantity} ${item.unit}`);
   }
 
   private normalizeWarehouse(value: number | null | undefined) {

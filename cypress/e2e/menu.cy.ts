@@ -42,26 +42,45 @@ describe('Weekly menu', () => {
           const day1 = menuResponse.body.days[0];
           const lunch = day1.meals.find((meal: { mealType: string }) => meal.mealType === 'LUNCH');
 
+          cy.viewport(1366, 768);
           cy.visit('/menu', {
             onBeforeLoad(win) {
               win.localStorage.setItem('dietapp_token', token);
             },
           });
 
-          cy.get(`[data-cy=meal-ingredient-${lunch.id}]`).first().click();
+          cy.get(`.menu-desktop [data-cy=meal-ingredient-${lunch.id}]`).first().click();
           cy.contains('.p-select-option', 'Rice').click();
           cy.contains('Item added', { timeout: 10000 }).should('exist');
-          cy.contains('[data-cy=meal-item]', 'Rice').should('exist');
+          cy.get('.menu-desktop').contains('[data-cy=meal-item]', 'Rice').should('exist');
+          cy.contains('.menu-desktop [data-cy=meal-item] .item-name', 'Rice').should('be.visible');
+          cy.contains('.menu-desktop [data-cy=meal-item]', 'Rice')
+            .find('.item-controls')
+            .should('be.visible');
+          cy.get('.menu-desktop').contains('[data-cy=meal-item]', 'Rice').then(($item) => {
+            const itemEl = $item[0];
+            const controlsEl = itemEl.querySelector('.item-controls') as HTMLElement | null;
+            expect(controlsEl).to.exist;
+            const itemRect = itemEl.getBoundingClientRect();
+            const controlsRect = controlsEl?.getBoundingClientRect();
+            if (!controlsRect) {
+              throw new Error('Missing item controls');
+            }
+            expect(itemEl.scrollWidth).to.be.at.most(itemEl.clientWidth + 16);
+            expect(controlsRect.top).to.be.at.most(itemRect.top + 4);
+          });
 
-          cy.contains('[data-cy=meal-item]', 'Rice').within(() => {
+          cy.get('.menu-desktop').contains('[data-cy=meal-item]', 'Rice').within(() => {
             cy.get('[data-cy=meal-item-quantity] input')
+              .scrollIntoView()
+              .click({ force: true })
               .clear({ force: true })
               .type('120', { force: true })
-              .blur();
+              .trigger('blur', { force: true });
           });
           cy.contains('Quantity updated', { timeout: 10000 }).should('exist');
 
-          cy.get(`[data-cy=meal-ingredient-${lunch.id}]`).first().click();
+          cy.get(`.menu-desktop [data-cy=meal-ingredient-${lunch.id}]`).first().click();
           cy.contains('.p-select-option', 'Eggs').click();
           cy.contains('Ingredient not allowed for this meal type', { timeout: 10000 }).should('exist');
         });

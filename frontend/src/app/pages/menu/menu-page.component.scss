@@ -52,9 +52,9 @@
 }
 
 .items li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
   padding: var(--space-sm);
   border-radius: var(--space-sm);
@@ -64,10 +64,23 @@
 
 .item-name {
   font-weight: var(--font-weight-medium);
-  max-width: 140px;
+  max-width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.item-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 0 1 88px;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .meta {
@@ -81,10 +94,11 @@
   gap: var(--space-xs);
   color: var(--text-color-secondary);
   font-size: var(--font-size-sm);
+  flex-wrap: nowrap;
 }
 
 .item-unit {
-  min-width: 2.5ch;
+  min-width: 1ch;
 }
 
 :host ::ng-deep .item-qty .p-inputnumber {
@@ -110,9 +124,6 @@
 
 /* Desktop View: Grid */
 @media (min-width: 1024px) {
-  .item-name {
-    max-width: 200px;
-  }
   .menu-mobile {
     display: none;
   }
@@ -161,5 +172,30 @@
     border-top: 1px solid var(--border-color);
     border-left: 1px solid var(--border-color);
     min-height: 150px;
+  }
+
+  .items li {
+    gap: 1px;
+    padding: 4px;
+  }
+
+  .item-controls {
+    flex: 0 1 100px;
+    gap: 1px;
+  }
+
+  :host ::ng-deep .item-qty .p-inputnumber {
+    width: 57.5px;
+  }
+
+  :host ::ng-deep .item-qty .p-inputnumber .p-inputnumber-input {
+    width: 57.5px;
+  }
+
+  :host ::ng-deep .item-controls .p-button {
+    min-width: 0;
+    padding: 0;
+    width: 18px;
+    height: 18px;
   }
 }

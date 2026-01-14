@@ -96,9 +96,10 @@ describe('Collaboration', () => {
 
         cy.get('.menu-desktop [data-cy=meal-item-quantity] input')
           .first()
-          .clear()
-          .type('250')
-          .blur();
+          .scrollIntoView()
+          .clear({ force: true })
+          .type('250', { force: true });
+        cy.focused().blur({ force: true });
 
         cy.contains('Quantity updated').should('exist');
         cy.reload();

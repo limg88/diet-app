@@ -5,6 +5,10 @@ const config: CapacitorConfig = {
   appName: 'Diet App',
   webDir: 'dist/browser',
   bundledWebRuntime: false,
+  server: {
+    androidScheme: 'http',
+    hostname: 'localhost',
+  },
 };
 
 export default config;

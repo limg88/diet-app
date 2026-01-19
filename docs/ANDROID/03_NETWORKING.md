@@ -9,7 +9,7 @@ apiBaseUrl: 'http://<LAN_IP>:3000/api'
 ```
 
 Examples:
-- Device on same Wi‑Fi: `http://192.168.1.50:3000/api`
+- Device on same Wi-Fi: `http://192.168.1.50:3000/api`
 - Android emulator: `http://10.0.2.2:3000/api`
 
 For production, use your HTTPS endpoint (reverse proxy / public host).
@@ -20,10 +20,19 @@ npm --prefix frontend run build:android
 npx --prefix frontend cap sync android
 ```
 
+## Build command (Android emulator config)
+```
+npm --prefix frontend run build:android:emulator
+npx --prefix frontend cap sync android
+```
+
 ## Cleartext HTTP (debug)
 Debug builds allow HTTP via:
 - `frontend/android/app/src/debug/AndroidManifest.xml`
 - `frontend/android/app/src/debug/res/xml/network_security_config.xml`
+
+The app origin is set to `http://localhost` in `frontend/capacitor.config.ts`
+to avoid mixed-content blocking when calling HTTP APIs on LAN.
 
 For release, use HTTPS and remove/adjust cleartext settings.
 

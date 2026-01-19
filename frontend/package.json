@@ -7,6 +7,7 @@
     "build": "ng build",
     "build:mobile": "ng build --output-path=dist",
     "build:android": "ng build --configuration android --output-path=dist",
+    "build:android:emulator": "ng build --configuration androidEmulator --output-path=dist",
     "android:add": "npx cap add android",
     "android:sync": "npx cap sync android",
     "android:open": "npx cap open android",

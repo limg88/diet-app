@@ -2,12 +2,10 @@ import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Client } from 'pg';
-
-const DEFAULT_DATABASE_URL = 'postgresql://dietapp:dietapp@localhost:5433/dietapp';
+import { buildClientConfig } from './db-config';
 
 async function runMigrations() {
-  const connectionString = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL;
-  const client = new Client({ connectionString });
+  const client = new Client(buildClientConfig(process.env));
   await client.connect();
 
   try {

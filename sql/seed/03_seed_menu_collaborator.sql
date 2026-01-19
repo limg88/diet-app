@@ -9,6 +9,92 @@ WITH params AS (
 target_user AS (
   SELECT id FROM users u JOIN params p ON u.email = p.user_email
 ),
+ingredient_source AS (
+  SELECT DISTINCT v.ingredient_name, v.unit
+  FROM (VALUES
+    (1, 'BREAKFAST', 'bevanda di riso', 200.0, 'gr'),
+    (1, 'MORNING_SNACK', 'pera', 25.0, 'gr'),
+    (1, 'LUNCH', 'uova di gallina intero', 120.0, 'gr'),
+    (1, 'AFTERNOON_SNACK', 'yogurt scremato', 125.0, 'gr'),
+    (1, 'DINNER', 'petto di pollo', 130.0, 'gr'),
+    (1, 'BREAKFAST', 'biscotti misura privolat', 30.0, 'gr'),
+    (1, 'LUNCH', 'zucchine', 200.0, 'gr'),
+    (1, 'AFTERNOON_SNACK', 'frutta secca', 20.0, 'gr'),
+    (1, 'DINNER', 'panko', 30.0, 'gr'),
+    (1, 'DINNER', 'minestrone leggerezza', 250.0, 'gr'),
+    (1, 'DINNER', 'pane tostato', 20.0, 'gr'),
+    (2, 'BREAKFAST', 'bevanda di riso', 200.0, 'gr'),
+    (2, 'MORNING_SNACK', 'pera', 200.0, 'gr'),
+    (2, 'LUNCH', 'primosale', 120.0, 'gr'),
+    (2, 'AFTERNOON_SNACK', 'pane tostato', 50.0, 'gr'),
+    (2, 'DINNER', 'pane tostato', 50.0, 'gr'),
+    (2, 'BREAKFAST', 'biscotti misura privolat', 30.0, 'gr'),
+    (2, 'LUNCH', 'zucca', 200.0, 'gr'),
+    (2, 'AFTERNOON_SNACK', 'miele', 10.0, 'gr'),
+    (2, 'DINNER', 'prosciutto cotto', 80.0, 'gr'),
+    (2, 'AFTERNOON_SNACK', 'noci', 10.0, 'gr'),
+    (2, 'DINNER', 'zucca', 200.0, 'gr'),
+    (3, 'BREAKFAST', 'bevanda di riso', 200.0, 'gr'),
+    (3, 'MORNING_SNACK', 'cachi', 200.0, 'gr'),
+    (3, 'LUNCH', 'salmone affumicato', 80.0, 'gr'),
+    (3, 'AFTERNOON_SNACK', 'yogurt greco', 150.0, 'gr'),
+    (3, 'DINNER', 'polpo', 300.0, 'gr'),
+    (3, 'BREAKFAST', 'biscotti misura privolat', 30.0, 'gr'),
+    (3, 'LUNCH', 'valeriana', 50.0, 'gr'),
+    (3, 'DINNER', 'patate', 200.0, 'gr'),
+    (3, 'LUNCH', 'carote', 150.0, 'gr'),
+    (4, 'BREAKFAST', 'bevanda di riso', 200.0, 'gr'),
+    (4, 'MORNING_SNACK', 'mela', 200.0, 'gr'),
+    (4, 'LUNCH', 'fior di latte', 150.0, 'gr'),
+    (4, 'AFTERNOON_SNACK', 'crackers riso su riso', 25.0, 'gr'),
+    (4, 'DINNER', 'hamburger vegetale', 150.0, 'gr'),
+    (4, 'BREAKFAST', 'biscotti misura privolat', 30.0, 'gr'),
+    (4, 'LUNCH', 'melanzane', 200.0, 'gr'),
+    (4, 'DINNER', 'tris di verdure', 200.0, 'gr'),
+    (5, 'BREAKFAST', 'bevanda di riso', 200.0, 'gr'),
+    (5, 'MORNING_SNACK', 'banana', 200.0, 'gr'),
+    (5, 'LUNCH', 'prosciutto cotto', 80.0, 'gr'),
+    (5, 'AFTERNOON_SNACK', 'yogurt scremato', 125.0, 'gr'),
+    (5, 'DINNER', 'roastbeef', 180.0, 'gr'),
+    (5, 'BREAKFAST', 'biscotti misura privolat', 30.0, 'gr'),
+    (5, 'LUNCH', 'piselli', 80.0, 'gr'),
+    (5, 'AFTERNOON_SNACK', 'frutta secca', 20.0, 'gr'),
+    (5, 'DINNER', 'melanzane', 200.0, 'gr'),
+    (5, 'LUNCH', 'funghi', 200.0, 'gr'),
+    (6, 'BREAKFAST', 'latte scramato', 200.0, 'gr'),
+    (6, 'MORNING_SNACK', 'pera', 25.0, 'gr'),
+    (6, 'LUNCH', 'salmone', 200.0, 'gr'),
+    (6, 'AFTERNOON_SNACK', 'mela', 200.0, 'gr'),
+    (6, 'BREAKFAST', 'farina di riso', 50.0, 'gr'),
+    (6, 'LUNCH', 'tris di verdure', 200.0, 'gr'),
+    (6, 'BREAKFAST', 'marmellata', 20.0, 'gr'),
+    (6, 'BREAKFAST', 'albume', 80.0, 'gr'),
+    (7, 'BREAKFAST', 'latte scramato', 200.0, 'gr'),
+    (7, 'MORNING_SNACK', 'pera', 200.0, 'gr'),
+    (7, 'LUNCH', 'pasta', 50.0, 'gr'),
+    (7, 'AFTERNOON_SNACK', 'uva', 200.0, 'gr'),
+    (7, 'DINNER', 'pane tostato', 50.0, 'gr'),
+    (7, 'BREAKFAST', 'farina di riso', 50.0, 'gr'),
+    (7, 'LUNCH', 'passata di pomodoro', 200.0, 'gr'),
+    (7, 'DINNER', 'tris di verdure', 200.0, 'gr'),
+    (7, 'BREAKFAST', 'marmellata', 20.0, 'gr'),
+    (7, 'LUNCH', 'manzo magro macinato', 150.0, 'gr'),
+    (7, 'DINNER', 'fesa di tacchino', 80.0, 'gr'),
+    (7, 'BREAKFAST', 'albume', 80.0, 'gr'),
+    (7, 'DINNER', 'philadelphia', 25.0, 'gr')
+  ) AS v(day_of_week, meal_type, ingredient_name, quantity, unit)
+),
+insert_ingredients AS (
+  INSERT INTO ingredients (user_id, name, category, default_unit)
+  SELECT u.id, s.ingredient_name, NULL,
+         CASE WHEN s.unit IN ('gr', 'ml') THEN s.unit ELSE 'unit' END
+  FROM target_user u
+  JOIN ingredient_source s ON true
+  WHERE NOT EXISTS (
+    SELECT 1 FROM ingredients i WHERE i.user_id = u.id AND i.name = s.ingredient_name
+  )
+  RETURNING id
+),
 upsert_menu AS (
   INSERT INTO weekly_menus (user_id, week_start_date)
   SELECT target_user.id, params.week_start_date
@@ -60,12 +146,17 @@ insert_meals AS (
   ) AS d(day_of_week, meal_type)
   ON CONFLICT (weekly_menu_id, day_of_week, meal_type) DO NOTHING
   RETURNING weekly_menu_id
+),
+target_menu AS (
+  SELECT id FROM upsert_menu
+  UNION
+  SELECT weekly_menu_id FROM insert_meals
 )
 INSERT INTO meal_items (menu_meal_id, ingredient_id, quantity, unit)
 SELECT mm.id, i.id, v.quantity, v.unit
-FROM menu_meals mm
-JOIN weekly_menus wm ON wm.id = mm.weekly_menu_id
-JOIN target_user u ON u.id = wm.user_id
+FROM target_menu tm
+JOIN menu_meals mm ON mm.weekly_menu_id = tm.id
+JOIN target_user u ON true
 JOIN (VALUES
   (1, 'BREAKFAST', 'bevanda di riso', 200.0, 'gr'),
   (1, 'MORNING_SNACK', 'pera', 25.0, 'gr'),
@@ -139,6 +230,14 @@ JOIN (VALUES
   (7, 'DINNER', 'philadelphia', 25.0, 'gr')
 ) AS v(day_of_week, meal_type, ingredient_name, quantity, unit)
   ON mm.day_of_week = v.day_of_week AND mm.meal_type = v.meal_type
-JOIN ingredients i ON i.user_id = u.id AND i.name = v.ingredient_name;
+JOIN ingredients i ON i.user_id = u.id AND i.name = v.ingredient_name
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM meal_items mi
+  WHERE mi.menu_meal_id = mm.id
+    AND mi.ingredient_id = i.id
+    AND mi.quantity = v.quantity
+    AND mi.unit = v.unit
+);
 
 COMMIT;

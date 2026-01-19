@@ -4,12 +4,10 @@ import { Client } from 'pg';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
-
-const DATABASE_URL =
-  process.env.DATABASE_URL ?? 'postgresql://dietapp:dietapp@localhost:5433/dietapp';
+import { buildClientConfig } from '../src/database/db-config';
 
 async function resetDatabase() {
-  const client = new Client({ connectionString: DATABASE_URL });
+  const client = new Client(buildClientConfig(process.env));
   await client.connect();
   try {
     await client.query('DELETE FROM shopping_items');

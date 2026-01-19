@@ -50,6 +50,28 @@ npm --prefix backend run seed:run
 npm run dev
 ```
 
+## Run with Neon (PowerShell)
+1) Set env in `.env`
+```
+DB_MODE=neon
+DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require&channel_binding=require
+DB_SSL=true
+DB_SSL_REJECT_UNAUTHORIZED=true
+DATABASE_POOL_MAX=5
+DATABASE_POOL_IDLE_TIMEOUT_MS=10000
+DATABASE_POOL_CONN_TIMEOUT_MS=2000
+```
+
+2) Run migrations (Neon)
+```
+npm --prefix backend run migration:run
+```
+
+3) Start dev servers
+```
+npm run dev
+```
+
 ## Tests (PowerShell)
 ```
 npm test

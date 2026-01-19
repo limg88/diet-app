@@ -12,7 +12,13 @@ Copy-Item .env.example .env
 ```
 
 Variables:
+- `DB_MODE` (local or neon)
 - `DATABASE_URL`
+- `DB_SSL`
+- `DB_SSL_REJECT_UNAUTHORIZED`
+- `DATABASE_POOL_MAX`
+- `DATABASE_POOL_IDLE_TIMEOUT_MS`
+- `DATABASE_POOL_CONN_TIMEOUT_MS`
 - `JWT_SECRET`
 - `TZ`
 - `API_BASE_URL`
@@ -45,6 +51,25 @@ npm run dev
 
 Frontend: http://localhost:4200
 Backend health: http://localhost:3000/api/health
+Backend DB health: http://localhost:3000/api/health/db
+
+## Run (Neon)
+Set environment variables:
+```env
+DB_MODE=neon
+DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require&channel_binding=require
+DB_SSL=true
+DB_SSL_REJECT_UNAUTHORIZED=true
+DATABASE_POOL_MAX=5
+DATABASE_POOL_IDLE_TIMEOUT_MS=10000
+DATABASE_POOL_CONN_TIMEOUT_MS=2000
+```
+
+Run migrations and seed against Neon:
+```powershell
+npm --prefix backend run migration:run
+npm --prefix backend run seed:run
+```
 
 ## Run (Docker all services)
 ```powershell

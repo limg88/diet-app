@@ -3,6 +3,8 @@ services:
     image: postgres:16
     container_name: dietapp_db
     restart: unless-stopped
+    profiles:
+      - local
     environment:
       POSTGRES_USER: dietapp
       POSTGRES_PASSWORD: dietapp
@@ -16,12 +18,43 @@ services:
       context: ./backend
     container_name: dietapp_backend
     restart: unless-stopped
+    profiles:
+      - local
     environment:
-      DATABASE_URL: postgresql://dietapp:dietapp@db:5432/dietapp
-      JWT_SECRET: change-me
-      TZ: Europe/Rome
+      DB_MODE: ${DB_MODE:-local}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://dietapp:dietapp@db:5432/dietapp}
+      DB_SSL: ${DB_SSL:-false}
+      DB_SSL_REJECT_UNAUTHORIZED: ${DB_SSL_REJECT_UNAUTHORIZED:-true}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-5}
+      DATABASE_POOL_IDLE_TIMEOUT_MS: ${DATABASE_POOL_IDLE_TIMEOUT_MS:-10000}
+      DATABASE_POOL_CONN_TIMEOUT_MS: ${DATABASE_POOL_CONN_TIMEOUT_MS:-2000}
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      TZ: ${TZ:-Europe/Rome}
     depends_on:
       - db
+    ports:
+      - "3000:3000"
+  backend-neon:
+    build:
+      context: ./backend
+    container_name: dietapp_backend
+    restart: unless-stopped
+    profiles:
+      - neon
+    networks:
+      default:
+        aliases:
+          - backend
+    environment:
+      DB_MODE: ${DB_MODE:-local}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://dietapp:dietapp@db:5432/dietapp}
+      DB_SSL: ${DB_SSL:-false}
+      DB_SSL_REJECT_UNAUTHORIZED: ${DB_SSL_REJECT_UNAUTHORIZED:-true}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-5}
+      DATABASE_POOL_IDLE_TIMEOUT_MS: ${DATABASE_POOL_IDLE_TIMEOUT_MS:-10000}
+      DATABASE_POOL_CONN_TIMEOUT_MS: ${DATABASE_POOL_CONN_TIMEOUT_MS:-2000}
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      TZ: ${TZ:-Europe/Rome}
     ports:
       - "3000:3000"
   frontend:
@@ -29,8 +62,6 @@ services:
       context: ./frontend
     container_name: dietapp_frontend
     restart: unless-stopped
-    depends_on:
-      - backend
     ports:
       - "4200:80"
 

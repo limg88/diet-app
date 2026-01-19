@@ -27,14 +27,20 @@
 - `npm --prefix frontend run test:ci`
 
 ## Environment variables (.env.example)
+- `DB_MODE` (local or neon)
 - `DATABASE_URL`
+- `DB_SSL`
+- `DB_SSL_REJECT_UNAUTHORIZED`
+- `DATABASE_POOL_MAX`
+- `DATABASE_POOL_IDLE_TIMEOUT_MS`
+- `DATABASE_POOL_CONN_TIMEOUT_MS`
 - `JWT_SECRET`
 - `TZ` (Europe/Rome)
 - `API_BASE_URL` (frontend)
 
 ## Feature map (from AGENTS.md + UI)
 - Auth: register/login, JWT; per-user data
-- Weekly menu: current ISO week (Europe/Rome), 7 days × 5 meals, add/remove meal items
+- Weekly menu: current ISO week (Europe/Rome), 7 days x 5 meals, add/remove meal items
 - Ingredients database: CRUD, filters, allowed meal types
 - Shopping list: aggregated from menu + off-menu items, purchased toggle
 

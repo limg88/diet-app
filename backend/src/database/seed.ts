@@ -4,8 +4,8 @@ import bcrypt from 'bcryptjs';
 import { MealType } from '../common/enums/meal-type.enum';
 import { Unit } from '../common/enums/unit.enum';
 import { formatDateToIso, getCurrentRomeDate, getIsoWeekStart } from '../common/utils/time';
+import { buildClientConfig } from './db-config';
 
-const DEFAULT_DATABASE_URL = 'postgresql://dietapp:dietapp@localhost:5433/dietapp';
 const DEMO_EMAIL = 'demo@diet.app';
 const DEMO_PASSWORD = 'password123';
 
@@ -34,8 +34,7 @@ const MEAL_ORDER: MealType[] = [
 ];
 
 async function seed() {
-  const connectionString = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL;
-  const client = new Client({ connectionString });
+  const client = new Client(buildClientConfig(process.env));
   await client.connect();
 
   try {

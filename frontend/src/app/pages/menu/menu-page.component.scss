@@ -83,6 +83,26 @@
   min-width: 0;
 }
 
+.menu-mobile .item-controls {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.menu-mobile .item-qty {
+  width: 100%;
+}
+
+.menu-mobile :host ::ng-deep .item-qty .p-inputnumber,
+.menu-mobile :host ::ng-deep .item-qty .p-inputnumber .p-inputnumber-input {
+  width: 100%;
+}
+
+.menu-mobile :host ::ng-deep .item-controls .p-button {
+  min-width: 36px;
+  min-height: 36px;
+}
+
 .meta {
   color: var(--text-color-secondary);
   font-size: var(--font-size-sm);

@@ -73,6 +73,12 @@ body {
   font-size: var(--font-size-md);
 }
 
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+  }
+}
+
 /* Focus Outline */
 a:focus-visible,
 button:focus-visible,

@@ -43,6 +43,18 @@
   align-items: center;
 }
 
+@media (max-width: 600px) {
+  .ingredient-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 .spinner {
   margin: var(--space-xl) auto;
   display: block;

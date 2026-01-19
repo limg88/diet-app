@@ -38,6 +38,11 @@
   flex-wrap: wrap;
 }
 
+.action-btn {
+  min-width: 36px;
+  min-height: 36px;
+}
+
 .toggle {
   display: flex;
   align-items: center;
@@ -200,6 +205,17 @@
   .filters {
     grid-template-columns: repeat(6, minmax(0, 1fr)) auto;
     align-items: end;
+  }
+}
+
+@media (max-width: 600px) {
+  .shopping-card {
+    padding: var(--space-md);
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 

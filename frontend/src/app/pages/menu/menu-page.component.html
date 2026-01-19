@@ -74,6 +74,7 @@
                     [(ngModel)]="getDraft(meal.id).ingredientId"
                     [attr.data-cy]="'meal-ingredient-' + meal.id"
                     [inputId]="'meal-ingredient-' + meal.id"
+                    [appendTo]="'body'"
                     (onChange)="addItem(meal.id)"
                   ></p-select>
                 </div>
@@ -135,6 +136,7 @@
                 [(ngModel)]="getDraft(meal.id).ingredientId"
                 [attr.data-cy]="'meal-ingredient-' + meal.id"
                 [inputId]="'meal-ingredient-' + meal.id + '-desktop'"
+                [appendTo]="'body'"
                 (onChange)="addItem(meal.id)"
               ></p-select>
             </div>

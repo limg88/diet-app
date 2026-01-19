@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, isDevMode } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -89,6 +89,7 @@ export class MenuPageComponent implements OnInit {
         this.menuApi.getCurrent(this.ownerUserId).subscribe({
           next: (menu) => {
             this.menu = menu;
+            this.warnIfMenuLooksDuplicated(menu);
             this.loading = false;
           },
           error: (err) => {
@@ -212,5 +213,19 @@ export class MenuPageComponent implements OnInit {
 
   getMeal(day: WeeklyMenu['days'][number], mealType: MealType) {
     return day.meals.find((meal) => meal.mealType === mealType) ?? null;
+  }
+
+  private warnIfMenuLooksDuplicated(menu: WeeklyMenu) {
+    if (!isDevMode()) {
+      return;
+    }
+    const dayCount = menu?.days?.length ?? 0;
+    const itemCount = menu?.days?.reduce((total, day) => {
+      const dayItems = day.meals.reduce((sum, meal) => sum + meal.items.length, 0);
+      return total + dayItems;
+    }, 0) ?? 0;
+    if (dayCount > 7 || itemCount > 200) {
+      console.warn('[menu] Unusual menu size detected', { dayCount, itemCount });
+    }
   }
 }

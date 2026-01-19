@@ -1,9 +1,26 @@
 /* General Styles */
 
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.stack {
+  width: 100%;
+  max-width: 100%;
+}
+
+.stack > * {
+  min-width: 0;
+}
+
 .page-title-row {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .spinner, .empty {
@@ -12,15 +29,32 @@
   color: var(--text-color-secondary);
 }
 
+.page-header__meta {
+  min-width: 0;
+}
+
+.page-header {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* Mobile View: Accordion */
 .menu-desktop {
   display: none;
+}
+
+.menu-mobile {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .day-content {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+  max-width: 100%;
 }
 
 .meal-card {
@@ -49,6 +83,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  max-width: 100%;
 }
 
 .items li {
@@ -60,6 +95,8 @@
   border-radius: var(--space-sm);
   background: var(--surface-b);
   transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .item-name {
@@ -84,18 +121,18 @@
 }
 
 .menu-mobile .item-controls {
-  flex: 1 1 auto;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
 }
 
 .menu-mobile .item-qty {
-  width: 100%;
+  width: auto;
 }
 
 .menu-mobile :host ::ng-deep .item-qty .p-inputnumber,
 .menu-mobile :host ::ng-deep .item-qty .p-inputnumber .p-inputnumber-input {
-  width: 100%;
+  width: 90px;
 }
 
 .menu-mobile :host ::ng-deep .item-controls .p-button {
@@ -137,8 +174,37 @@
 /* Add Item controls */
 .add-item {
   margin-top: 15px;
+  max-width: 100%;
   :host ::ng-deep .p-select {
     width: 100%;
+  }
+}
+
+.menu-mobile :host ::ng-deep .p-accordion,
+.menu-mobile :host ::ng-deep .p-accordion-panel,
+.menu-mobile :host ::ng-deep .p-accordion-header,
+.menu-mobile :host ::ng-deep .p-accordion-content {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.menu-mobile :host ::ng-deep .p-accordion-header-link {
+  background: var(--surface-a);
+  color: var(--text-color);
+}
+
+.menu-mobile :host ::ng-deep .p-accordion-content {
+  background: var(--surface-a);
+  color: var(--text-color);
+}
+
+.menu-mobile :host ::ng-deep .p-accordion-panel:not(.p-accordion-panel-active) .p-accordion-header-link {
+  background: var(--surface-b);
+}
+
+@media (max-width: 1023px) {
+  .menu-mobile {
+    overflow-x: clip;
   }
 }
 
@@ -149,6 +215,8 @@
   }
   .menu-desktop {
     display: block;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .menu-grid {
@@ -158,6 +226,7 @@
     border: 1px solid var(--border-color);
     border-radius: var(--space-lg);
     overflow: hidden;
+    max-width: 100%;
   }
 
   .header-cell, .day-label, .meal-cell {
